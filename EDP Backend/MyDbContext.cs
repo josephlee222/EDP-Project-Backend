@@ -1,6 +1,6 @@
 ﻿using EDP_Backend.Models;
 using Microsoft.EntityFrameworkCore;
-namespace LearningAPI
+namespace EDP_Backend
 {
     public class MyDbContext : DbContext
     {

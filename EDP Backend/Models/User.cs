@@ -25,8 +25,8 @@ namespace EDP_Backend.Models
         public Boolean IsAdmin { get; set; } = false;
         public Boolean IsDeleted { get; set; } = false;
         [Column(TypeName = "datetime")]
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
         [Column(TypeName = "datetime")]
-        public DateTime UpdatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; } = DateTime.Now;
     }
 }
