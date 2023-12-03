@@ -2,6 +2,7 @@
 using System.Security.Claims;
 using System.Text;
 using EDP_Backend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
@@ -73,6 +74,32 @@ namespace EDP_Backend.Controllers
             }
             var token = CreateToken(existingUser);
             return Ok(new { user = existingUser, token });
+        }
+
+        [HttpGet("Auth"), Authorize]
+        public IActionResult Auth()
+        {
+            var id = Convert.ToInt32(User.Claims.Where(
+            c => c.Type == ClaimTypes.NameIdentifier)
+            .Select(c => c.Value).SingleOrDefault());
+            var name = User.Claims.Where(c => c.Type == ClaimTypes.Name)
+            .Select(c => c.Value).SingleOrDefault();
+            var email = User.Claims.Where(c => c.Type == ClaimTypes.Email)
+            .Select(c => c.Value).SingleOrDefault();
+            if (id != 0 && name != null && email != null)
+            {
+                var user = new
+                {
+                    id,
+                    email,
+                    name
+                };
+                return Ok(new { user });
+            }
+            else
+            {
+                return Unauthorized(new { id, email, name });
+            }
         }
 
         private string CreateToken(User user)
