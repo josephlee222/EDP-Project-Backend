@@ -24,6 +24,7 @@ namespace EDP_Backend.Models
         public decimal Balance { get; set; } = 0;
         public Boolean IsAdmin { get; set; } = false;
         public Boolean IsDeleted { get; set; } = false;
+        public Boolean IsVerified { get; set; } = false;
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         [Column(TypeName = "datetime")]

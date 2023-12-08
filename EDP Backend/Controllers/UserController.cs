@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
 using Microsoft.IdentityModel.Tokens;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace EDP_Backend.Controllers
 {
@@ -22,6 +23,8 @@ namespace EDP_Backend.Controllers
             _configuration = configuration;
         }
 
+        [SwaggerOperation(Summary = "Register with email and password")]
+        [AllowAnonymous]
         [HttpPost("Register")]
         public IActionResult Register([FromBody] RegisterRequest request)
         {
@@ -34,7 +37,7 @@ namespace EDP_Backend.Controllers
             User? existingUser = _context.Users.FirstOrDefault(user => user.Email == request.Email);
             if (existingUser != null)
             {
-                return BadRequest("Email already registered");
+                return BadRequest(Helper.Helper.GenerateError("Account with this email already exists"));
             }
 
             // Encrypt password
@@ -51,7 +54,8 @@ namespace EDP_Backend.Controllers
             return Ok(user);
         }
 
-
+        [SwaggerOperation(Summary = "Login with email and password")]
+        [AllowAnonymous]
         [HttpPost("Login")]
         public IActionResult Login([FromBody] LoginRequest request)
         {
@@ -63,19 +67,20 @@ namespace EDP_Backend.Controllers
             User? existingUser = _context.Users.FirstOrDefault(user => user.Email == request.Email);
             if (existingUser == null)
             {
-                return BadRequest("Email not registered");
+                return BadRequest(Helper.Helper.GenerateError("Account does not exist"));
             }
 
             // Check if password is correct
             bool isPasswordCorrect = BCrypt.Net.BCrypt.Verify(request.Password, existingUser.Password);
             if (!isPasswordCorrect)
             {
-                return BadRequest("Password incorrect");
+                return BadRequest(Helper.Helper.GenerateError("Incorrect password"));
             }
             var token = CreateToken(existingUser);
             return Ok(new { user = existingUser, token });
         }
 
+        [SwaggerOperation(Summary = "Get user info")]
         [HttpGet("Auth"), Authorize]
         public IActionResult Auth()
         {
@@ -99,6 +104,34 @@ namespace EDP_Backend.Controllers
             else
             {
                 return Unauthorized(new { id, email, name });
+            }
+        }
+
+
+        [SwaggerOperation(Summary = "Initialise default admin user if it does not exist")]
+        [HttpGet("Init")]
+        public IActionResult Init()
+        {
+            // Create admin user (only works if no default admin exist)
+            User? existingUser = _context.Users.FirstOrDefault(user => user.Email == "admin@admin.com");
+            if (existingUser == null)
+            {
+                string encryptedPassword = BCrypt.Net.BCrypt.HashPassword("admin123");
+                User user = new User
+                {
+                    Name = "admin",
+                    Email = "admin@admin.com",
+                    Password = encryptedPassword,
+                    IsVerified = true,
+                    IsAdmin = true,
+                };
+
+                _context.Users.Add(user);
+                _context.SaveChanges();
+                return Ok(user);
+            } else
+            {
+                return BadRequest(Helper.Helper.GenerateError("Admin user already exists"));
             }
         }
 

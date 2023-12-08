@@ -33,6 +33,9 @@ builder.Services.AddSwaggerGen(options =>
     {
     { securityScheme, new List<string>() }
     });
+
+    options.EnableAnnotations();
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "EDP_Backend", Version = "v1" });
 });
 
 // Authentication
