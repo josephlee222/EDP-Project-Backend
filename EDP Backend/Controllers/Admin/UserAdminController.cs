@@ -56,5 +56,17 @@ namespace EDP_Backend.Controllers
         {
             return Ok(_context.Users);
         }
+
+        [SwaggerOperation(Summary = "Get a specific user")]
+        [HttpGet("{id}"), Authorize(Roles = "Admin")]
+        public IActionResult GetUser(int id)
+        {
+            User? user = _context.Users.Find(id);
+            if (user == null)
+            {
+                return NotFound(Helper.Helper.GenerateError("User not found"));
+            }
+            return Ok(user);
+        }
     }
 }

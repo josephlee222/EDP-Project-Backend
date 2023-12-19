@@ -80,7 +80,7 @@ namespace EDP_Backend.Controllers
             return Ok(new { user = existingUser, token });
         }
 
-        [SwaggerOperation(Summary = "Get user info")]
+        [SwaggerOperation(Summary = "Get user info inside of the token")]
         [HttpGet("Auth"), Authorize]
         public IActionResult Auth()
         {
@@ -134,6 +134,68 @@ namespace EDP_Backend.Controllers
                 return BadRequest(Helper.Helper.GenerateError("Admin user already exists"));
             }
         }
+
+
+        [SwaggerOperation(Summary = "Get user information based on the token of the logged in user")]
+        [HttpGet(), Authorize]
+        public IActionResult GetUserInfo()
+        {
+            int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            User? user = _context.Users.FirstOrDefault(user => user.Id == id);
+
+            if (user != null)
+            {
+                return Ok(user);
+            }
+            else
+            {
+                return BadRequest(Helper.Helper.GenerateError("User does not exist"));
+            }
+        }
+
+        [SwaggerOperation(Summary = "Update user information based on the token of the logged in user")]
+        [HttpPut(), Authorize]
+        public IActionResult UpdateUserInfo([FromBody] EditUserRequest request)
+        {
+            int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            User? user = _context.Users.FirstOrDefault(user => user.Id == id);
+
+            if (user != null)
+            {
+                // Update if request is not null
+                user.Name = request.Name ?? user.Name;
+                user.Email = request.Email ?? user.Email;
+                user.Address = request.Address ?? user.Address;
+                user.PhoneNumber = request.PhoneNumber ?? user.PhoneNumber;
+                user.PostalCode = request.PostalCode ?? user.PostalCode;
+                user.ProfilePictureType = request.ProfilePictureType ?? user.ProfilePictureType;
+
+
+                // Check if password is correct if request is not null
+                if (request.Password != null)
+                {
+                    bool isPasswordCorrect = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
+                    if (!isPasswordCorrect)
+                    {
+                        return BadRequest(Helper.Helper.GenerateError("Incorrect password"));
+                    }
+                    else
+                    {
+                        // Encrypt password
+                        string encryptedPassword = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+                        user.Password = encryptedPassword;
+                    }
+                }
+
+                _context.SaveChanges();
+                return Ok(user);
+            }
+            else
+            {
+                return BadRequest(Helper.Helper.GenerateError("User does not exist"));
+            }
+            
+        }   
 
         private string CreateToken(User user)
         {

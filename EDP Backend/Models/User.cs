@@ -22,6 +22,12 @@ namespace EDP_Backend.Models
         public string? ProfilePictureType { get; set; }
         [Column(TypeName = "decimal(6,2)")]
         public decimal Balance { get; set; } = 0;
+        [MaxLength(64)]
+        public string? OccupationalStatus { get; set; }
+        [MaxLength(6)]
+        public string? PostalCode { get; set; }
+        [MaxLength(256)]
+        public string? Address { get; set; }
         public Boolean IsAdmin { get; set; } = false;
         public Boolean IsDeleted { get; set; } = false;
         public Boolean IsVerified { get; set; } = false;
