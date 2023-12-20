@@ -1,13 +1,6 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using EDP_Backend.Models;
-using EDP_Backend.Helper;
+﻿using EDP_Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-
-using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace EDP_Backend.Controllers
@@ -26,7 +19,7 @@ namespace EDP_Backend.Controllers
 
         [SwaggerOperation(Summary = "Create a new user")]
         [HttpPost("Create"), Authorize(Roles = "Admin")]
-        public IActionResult CreateUser([FromBody] CreateRequest request)
+        public IActionResult CreateUser([FromBody] CreateUserRequest request)
         {
             string? name = request.Name.Trim();
             string? email = request.Email.Trim();
@@ -54,7 +47,7 @@ namespace EDP_Backend.Controllers
         [HttpGet(), Authorize(Roles = "Admin")]
         public IActionResult GetUsers()
         {
-            return Ok(_context.Users);
+            return Ok(_context.Users.Where(user => !user.IsDeleted));
         }
 
         [SwaggerOperation(Summary = "Get a specific user")]
@@ -67,6 +60,52 @@ namespace EDP_Backend.Controllers
                 return NotFound(Helper.Helper.GenerateError("User not found"));
             }
             return Ok(user);
+        }
+
+        [SwaggerOperation(Summary = "Update a specific user (Needs fixing)")]
+        [HttpPut("{id}"), Authorize(Roles = "Admin")]
+        public IActionResult UpdateUser(int id, [FromBody] AdminEditUserRequest request)
+        {
+            User? user = _context.Users.Find(id);
+            if (user == null)
+            {
+                return NotFound(Helper.Helper.GenerateError("User not found"));
+            }
+            
+
+            // Update user if fields are not null
+            user.Name = request.Name ?? user.Name;
+            user.Email = request.Email ?? user.Email;
+            user.IsAdmin = request.IsAdmin ?? user.IsAdmin;
+            user.PhoneNumber = request.PhoneNumber ?? user.PhoneNumber;
+            user.Address = request.Address ?? user.Address;
+            user.OccupationalStatus = request.OccupationalStatus ?? user.OccupationalStatus;
+            user.ProfilePictureType = request.ProfilePictureType ?? user.ProfilePictureType;
+            user.PostalCode = request.PostalCode ?? user.PostalCode;
+            
+            // Encrypt password if not null
+            if (request.NewPassword != null)
+            {
+                string encryptedPassword = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+                user.Password = encryptedPassword;
+            }
+
+            _context.SaveChanges();
+            return Ok(user);
+        }
+
+        [SwaggerOperation(Summary = "Delete a specific user")]
+        [HttpDelete("{id}"), Authorize(Roles = "Admin")]
+        public IActionResult DeleteUser(int id)
+        {
+            User? user = _context.Users.Find(id);
+            if (user == null)
+            {
+                return NotFound(Helper.Helper.GenerateError("User not found"));
+            }
+            user.IsDeleted = true;
+            _context.SaveChanges();
+            return Ok();
         }
     }
 }

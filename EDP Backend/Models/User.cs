@@ -11,7 +11,7 @@ namespace EDP_Backend.Models
         [MaxLength(128), EmailAddress]
         public string Email { get; set; } = string.Empty;
         [MaxLength(128)]
-        public string Password { get; set; } = string.Empty;
+        public string? Password { get; set; }
         [MaxLength(128)]
         public string? Passkey { get; set; }
         [MaxLength(128)]

@@ -2,7 +2,7 @@
 
 namespace EDP_Backend.Models
 {
-    public class CreateRequest
+    public class CreateUserRequest
     {
         [MinLength(3), MaxLength(64), Required]
         [RegularExpression(@"^[a-zA-Z '-,.]+$", ErrorMessage = "Only allow letters, spaces and characters: ' - , .")]

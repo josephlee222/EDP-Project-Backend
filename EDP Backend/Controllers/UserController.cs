@@ -65,17 +65,24 @@ namespace EDP_Backend.Controllers
 
             // Check if email is already registered
             User? existingUser = _context.Users.FirstOrDefault(user => user.Email == request.Email);
-            if (existingUser == null)
+            if (existingUser == null || existingUser.IsDeleted)
             {
-                return BadRequest(Helper.Helper.GenerateError("Account does not exist"));
+                return BadRequest(Helper.Helper.GenerateError("Wrong login details provided. Please try again."));
             }
 
             // Check if password is correct
             bool isPasswordCorrect = BCrypt.Net.BCrypt.Verify(request.Password, existingUser.Password);
             if (!isPasswordCorrect)
             {
-                return BadRequest(Helper.Helper.GenerateError("Incorrect password"));
+                return BadRequest(Helper.Helper.GenerateError("Wrong login details provided. Please try again."));
             }
+
+            // Check if user is not verified
+            if (!existingUser.IsVerified || existingUser.Password == null)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Account is not verified. Please check your e-mail inbox"));
+            }
+
             var token = CreateToken(existingUser);
             return Ok(new { user = existingUser, token });
         }
@@ -153,7 +160,7 @@ namespace EDP_Backend.Controllers
             }
         }
 
-        [SwaggerOperation(Summary = "Update user information based on the token of the logged in user")]
+        [SwaggerOperation(Summary = "Update user information based on the token of the logged in user (Needs fixing)")]
         [HttpPut(), Authorize]
         public IActionResult UpdateUserInfo([FromBody] EditUserRequest request)
         {
