@@ -23,7 +23,7 @@ namespace EDP_Backend.Controllers
             _configuration = configuration;
         }
 
-        [SwaggerOperation(Summary = "Register with email and password")]
+        [SwaggerOperation(Summary = "Register with name, email and password")]
         [AllowAnonymous]
         [HttpPost("Register")]
         public IActionResult Register([FromBody] RegisterRequest request)

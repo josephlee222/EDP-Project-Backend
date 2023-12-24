@@ -70,6 +70,36 @@ namespace EDP_Backend.Controllers
             return Ok(coupon);
         }
 
+        [SwaggerOperation(Summary = "Update a specific coupon")]
+        [HttpPut("{id}"), Authorize(Roles = "Admin")]
+        public IActionResult EditCoupon(int id, [FromBody] EditCouponRequest request)
+        {
+            // Get coupon
+            Coupon? coupon = _context.Coupons.Find(id);
+
+            // Check if coupon exists
+            if (coupon == null)
+            {
+                return NotFound(Helper.Helper.GenerateError("Coupon not found"));
+            }
+
+            // Update coupon
+            string? code = request.Code?.Trim();
+            string? description = request.Description?.Trim();
+            string? discountType = request.DiscountType?.Trim();
+            decimal? discountAmount = request.DiscountAmount;
+            DateTime? expiry = request.Expiry;
+
+            coupon.Code = code ?? coupon.Code;
+            coupon.Description = description ?? coupon.Description;
+            coupon.DiscountType = discountType ?? coupon.DiscountType;
+            coupon.DiscountAmount = discountAmount ?? coupon.DiscountAmount;
+            coupon.Expiry = expiry ?? coupon.Expiry;
+
+            _context.SaveChanges();
+            return Ok(coupon);
+        }
+
         [SwaggerOperation(Summary = "Delete a specific coupon")]
         [HttpDelete("{id}"), Authorize(Roles = "Admin")]
         public IActionResult DeleteCoupon(int id)
