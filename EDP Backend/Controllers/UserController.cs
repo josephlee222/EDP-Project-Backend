@@ -57,7 +57,11 @@ namespace EDP_Backend.Controllers
                 Password = encryptedPassword
             };
 
+            _context.Users.Add(user);
+            _context.SaveChanges();
+
             var token = Helper.Helper.RandomString(128);
+            user = _context.Users.FirstOrDefault(user => user.Email == request.Email);
             Token token1 = new()
             {
                 Code = token,
@@ -70,9 +74,59 @@ namespace EDP_Backend.Controllers
             Helper.Helper.SendMail(user.Name, user.Email, "Activate your UPlay Account", @$"<h1>Verify and activate your UPlay account</h1><br><p>Thank you for signing up for UPlay. Please click on the link below to activate your account. (This email design is temporary and subject to change)</p><br>{website}/verify?t={token1.Code}");
 
             _context.Tokens.Add(token1);
-            _context.Users.Add(user);
             _context.SaveChanges();
             return Ok(user);
+        }
+
+        [SwaggerOperation(Summary = "Verify and activate account with token")]
+        [AllowAnonymous]
+        [HttpPost("Verify")]
+        public IActionResult Verify([FromBody] VerifyRequest request)
+        {
+            // trim whitespace
+            request.Token = request.Token.Trim();
+
+            // Check if token exists
+            Token? existingToken = _context.Tokens.FirstOrDefault(token => token.Code == request.Token);
+            if (existingToken == null)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
+
+            // Check if token is not expired
+            if (existingToken.Expiry < DateTime.Now)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Token expired"));
+            }
+
+            // Check if token is not used
+            if (existingToken.IsUsed)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Token already used"));
+            }
+
+            // Check if token is of type Verify
+            if (existingToken.Type != "Verify")
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
+
+            // Verify user
+            User? existingUser = _context.Users.FirstOrDefault(user => user.Id == existingToken.UserId);
+            if (existingUser == null)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
+
+            existingUser.IsVerified = true;
+            _context.Users.Update(existingUser);
+
+            // Mark token as used
+            existingToken.IsUsed = true;
+            _context.Tokens.Update(existingToken);
+
+            _context.SaveChanges();
+            return Ok(existingUser);
         }
 
         [SwaggerOperation(Summary = "Login with email and password")]
@@ -107,6 +161,23 @@ namespace EDP_Backend.Controllers
             var token = CreateToken(existingUser);
             return Ok(new { user = existingUser, token });
         }
+
+        [SwaggerOperation(Summary = "Refresh user token with provided token")]
+        [HttpGet("Refresh"), Authorize]
+        public IActionResult Refresh()
+        {
+            int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            User? user = _context.Users.FirstOrDefault(user => user.Id == id);
+
+            if (user == null)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
+
+            var token = CreateToken(user);
+            return Ok(new { user, token });
+        }
+
 
         [SwaggerOperation(Summary = "Get user info inside of the token")]
         [HttpGet("Auth"), Authorize]
