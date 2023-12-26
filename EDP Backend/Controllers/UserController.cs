@@ -11,6 +11,7 @@ using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using MimeKit;
 using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace EDP_Backend.Controllers
 {
@@ -60,20 +61,18 @@ namespace EDP_Backend.Controllers
             _context.Users.Add(user);
             _context.SaveChanges();
 
-            var token = Helper.Helper.RandomString(128);
             user = _context.Users.FirstOrDefault(user => user.Email == request.Email);
-            Token token1 = new()
+            Token token = new()
             {
-                Code = token,
                 UserId = user.Id,
                 Type = "Verify"
             };
 
             var website = Environment.GetEnvironmentVariable("NET_WEBSITE");
 
-            Helper.Helper.SendMail(user.Name, user.Email, "Activate your UPlay Account", @$"<h1>Verify and activate your UPlay account</h1><br><p>Thank you for signing up for UPlay. Please click on the link below to activate your account. (This email design is temporary and subject to change)</p><br>{website}/verify?t={token1.Code}");
+            Helper.Helper.SendMail(user.Name, user.Email, "Activate your UPlay Account", @$"<h1>Verify and activate your UPlay account</h1><br><p>Thank you for signing up for UPlay. Please click on the link below to activate your account. (This email design is temporary and subject to change)</p><br>{website}/verify?t={token.Code}");
 
-            _context.Tokens.Add(token1);
+            _context.Tokens.Add(token);
             _context.SaveChanges();
             return Ok(user);
         }
@@ -161,6 +160,124 @@ namespace EDP_Backend.Controllers
             var token = CreateToken(existingUser);
             return Ok(new { user = existingUser, token });
         }
+
+        [SwaggerOperation(Summary = "Request for a password reset")]
+        [AllowAnonymous]
+        [HttpPost("Forgot")]
+        public IActionResult Forgot([FromBody] ForgotRequest request)
+        {
+            // trim whitespace
+            request.Email = request.Email.Trim();
+
+            // Check if email is already registered
+            User? existingUser = _context.Users.FirstOrDefault(user => user.Email == request.Email);
+            if (existingUser == null || existingUser.IsDeleted)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Wrong login details provided. Please try again."));
+            }
+
+            Token token = new()
+            {
+                UserId = existingUser.Id,
+                Type = "Reset"
+            };
+
+            var website = Environment.GetEnvironmentVariable("NET_WEBSITE");
+
+            Helper.Helper.SendMail(existingUser.Name, existingUser.Email, "Reset your UPlay Account", @$"<h1>Reset your UPlay account</h1><br><p>Thank you for using UPlay. Please click on the link below to reset your password. (This email design is temporary and subject to change)</p><br>{website}/reset?t={token.Code}");
+
+            _context.Tokens.Add(token);
+            _context.SaveChanges();
+            return Ok();
+        }
+
+        [SwaggerOperation(Summary = "Check whether a token is still valid for use")]
+        [AllowAnonymous]
+        [HttpGet("Check/{token}")]
+        public IActionResult Check(string token)
+        {
+            // trim whitespace
+            token = token.Trim();
+
+            // Check if token exists
+            Token? existingToken = _context.Tokens.FirstOrDefault(tokenFound => tokenFound.Code == token);
+            if (existingToken == null)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
+
+            // Check if token is not expired
+            if (existingToken.Expiry < DateTime.Now)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Token expired"));
+            }
+
+            // Check if token is not used
+            if (existingToken.IsUsed)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Token already used"));
+            }
+
+            return Ok(existingToken);
+        }
+
+
+        [SwaggerOperation(Summary = "Reset password with token")]
+        [AllowAnonymous]
+        [HttpPost("Reset")]
+        public IActionResult Reset([FromBody] ResetRequest request)
+        {
+            // trim whitespace
+            request.Token = request.Token.Trim();
+            request.Password = request.Password.Trim();
+
+            // Check if token exists
+            Token? existingToken = _context.Tokens.FirstOrDefault(token => token.Code == request.Token);
+            if (existingToken == null)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
+
+            // Check if token is not expired
+            if (existingToken.Expiry < DateTime.Now)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Token expired"));
+            }
+
+            // Check if token is not used
+            if (existingToken.IsUsed)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Token already used"));
+            }
+
+            // Check if token is of type Reset
+            if (existingToken.Type != "Reset")
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
+
+            // Verify user
+            User? existingUser = _context.Users.FirstOrDefault(user => user.Id == existingToken.UserId);
+            if (existingUser == null)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
+
+            // Hash password
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
+
+            // Update user
+            existingUser.Password = hashedPassword;
+            _context.Users.Update(existingUser);
+
+            // Mark token as used
+            existingToken.IsUsed = true;
+            _context.Tokens.Update(existingToken);
+
+            _context.SaveChanges();
+            return Ok(existingUser);
+        }
+
 
         [SwaggerOperation(Summary = "Refresh user token with provided token")]
         [HttpGet("Refresh"), Authorize]

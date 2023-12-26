@@ -6,7 +6,7 @@ namespace EDP_Backend.Models
     {
         public int Id { get; set; }
         [MaxLength(128)]
-        public string Code { get; set; } = string.Empty;
+        public string Code { get; set; } = Helper.Helper.RandomString(128);
         public int UserId { get; set; }
         public string Type { get; set; } = string.Empty;
         public bool IsUsed { get; set; } = false;
