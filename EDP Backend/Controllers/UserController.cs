@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using MimeKit;
 using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using Microsoft.EntityFrameworkCore;
 
 namespace EDP_Backend.Controllers
 {
@@ -64,7 +65,7 @@ namespace EDP_Backend.Controllers
             user = _context.Users.FirstOrDefault(user => user.Email == request.Email);
             Token token = new()
             {
-                UserId = user.Id,
+                User = user,
                 Type = "Verify"
             };
 
@@ -86,7 +87,7 @@ namespace EDP_Backend.Controllers
             request.Token = request.Token.Trim();
 
             // Check if token exists
-            Token? existingToken = _context.Tokens.FirstOrDefault(token => token.Code == request.Token);
+            Token? existingToken = _context.Tokens.Include(token => token.User).FirstOrDefault(token => token.Code == request.Token);
             if (existingToken == null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Invalid token"));
@@ -111,7 +112,7 @@ namespace EDP_Backend.Controllers
             }
 
             // Verify user
-            User? existingUser = _context.Users.FirstOrDefault(user => user.Id == existingToken.UserId);
+            User? existingUser = _context.Users.FirstOrDefault(user => user.Id == existingToken.User.Id);
             if (existingUser == null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Invalid token"));
@@ -178,7 +179,7 @@ namespace EDP_Backend.Controllers
 
             Token token = new()
             {
-                UserId = existingUser.Id,
+                User = existingUser,
                 Type = "Reset"
             };
 
@@ -232,7 +233,7 @@ namespace EDP_Backend.Controllers
             request.Password = request.Password.Trim();
 
             // Check if token exists
-            Token? existingToken = _context.Tokens.FirstOrDefault(token => token.Code == request.Token);
+            Token? existingToken = _context.Tokens.Include(token => token.User).FirstOrDefault(token => token.Code == request.Token);
             if (existingToken == null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Invalid token"));
@@ -257,7 +258,7 @@ namespace EDP_Backend.Controllers
             }
 
             // Verify user
-            User? existingUser = _context.Users.FirstOrDefault(user => user.Id == existingToken.UserId);
+            User? existingUser = _context.Users.FirstOrDefault(user => user.Id == existingToken.User.Id);
             if (existingUser == null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Invalid token"));
