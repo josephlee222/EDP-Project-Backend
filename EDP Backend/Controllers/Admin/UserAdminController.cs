@@ -18,7 +18,7 @@ namespace EDP_Backend.Controllers
         }
 
         [SwaggerOperation(Summary = "Create a new user")]
-        [HttpPost("Create"), Authorize(Roles = "Admin")]
+        [HttpPost(), Authorize(Roles = "Admin")]
         public IActionResult CreateUser([FromBody] CreateUserRequest request)
         {
             string? name = request.Name.Trim();
@@ -35,10 +35,25 @@ namespace EDP_Backend.Controllers
             User user = new User
             {
                 Name = name,
-                Email = email
+                Email = email,
+                IsAdmin = request.IsAdmin
             };
 
             _context.Users.Add(user);
+            _context.SaveChanges();
+
+            user = _context.Users.FirstOrDefault(user => user.Email == request.Email);
+            Token token = new()
+            {
+                User = user,
+                Type = "Verify"
+            };
+
+            var website = Environment.GetEnvironmentVariable("NET_WEBSITE");
+
+            Helper.Helper.SendMail(user.Name, user.Email, "Activate your UPlay Account", @$"<h1>Verify and activate your UPlay account</h1><br><p>Thank you for signing up for UPlay. Please click on the link below to activate your account. (This email design is temporary and subject to change)</p><br>{website}/verify?t={token.Code}");
+
+            _context.Tokens.Add(token);
             _context.SaveChanges();
             return Ok(user);
         }
