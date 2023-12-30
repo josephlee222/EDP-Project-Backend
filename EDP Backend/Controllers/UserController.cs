@@ -118,6 +118,28 @@ namespace EDP_Backend.Controllers
                 return BadRequest(Helper.Helper.GenerateError("Invalid token"));
             }
 
+            if (existingUser.IsVerified)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Account already verified"));
+            }
+
+            if (existingUser.IsDeleted)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Account deleted"));
+            }
+
+            if (existingUser.Password == null)
+            {
+                if (request.Password == null || request.Password == "")
+                {
+                    return Conflict(Helper.Helper.GenerateError("Need to set a password."));
+                }
+                
+                // Encrypt password
+                string encryptedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                existingUser.Password = encryptedPassword;
+            }
+
             existingUser.IsVerified = true;
             _context.Users.Update(existingUser);
 
