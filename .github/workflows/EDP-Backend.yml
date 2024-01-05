@@ -27,7 +27,7 @@ jobs:
     - name: Generate SQL Script
       run: |
        dotnet tool install --global dotnet-ef
-       dotnet ef database script --project "EDP Backend" --output ${{ env.WORKING_DIRECTORY }}/sql/sql-script.sql 
+       dotnet ef migrations script --project "EDP Backend" --output ${{ env.WORKING_DIRECTORY }}/sql/sql-script.sql 
     - name: Azure Login
       uses: azure/login@v1
       with:
