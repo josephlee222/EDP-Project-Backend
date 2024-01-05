@@ -27,7 +27,7 @@ jobs:
     - name: Update database
       run: |
        dotnet tool install --global dotnet-ef
-       dotnet ef database update --project "${{ env.WORKING_DIRECTORY }}"
+       dotnet ef database update --project "EDP Backend"
     - name: Publish
       run: dotnet publish "${{ env.WORKING_DIRECTORY }}" --configuration ${{ env.CONFIGURATION }} --no-build --output "${{ env.AZURE_WEBAPP_PACKAGE_PATH }}"
     - name: Publish Artifacts
