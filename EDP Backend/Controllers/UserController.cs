@@ -17,7 +17,7 @@ using Microsoft.EntityFrameworkCore;
 namespace EDP_Backend.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("/User")]
     public class UserController : ControllerBase
     {
         private readonly MyDbContext _context;
