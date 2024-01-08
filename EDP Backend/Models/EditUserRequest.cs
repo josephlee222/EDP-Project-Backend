@@ -4,14 +4,12 @@ namespace EDP_Backend.Models
 {
     public class EditUserRequest
     {
-        [MaxLength(128), EmailAddress]
-        public string Email { get; set; } = string.Empty;
         [MaxLength(128)]
         [RegularExpression(@"^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$", ErrorMessage = "Requires at least one letter and number")]
-        public string Password { get; set; } = string.Empty;
+        public string? Password { get; set; }
         [MaxLength(128)]
         [RegularExpression(@"^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$", ErrorMessage = "Requires at least one letter and number")]
-        public string NewPassword { get; set; } = string.Empty;
+        public string? NewPassword { get; set; }
         [MaxLength(128)]
         public string? Name { get; set; }
         [MaxLength(8)]
@@ -24,6 +22,6 @@ namespace EDP_Backend.Models
         public string? Address { get; set; }
         [MaxLength(24)]
         public string? ProfilePictureType { get; set; }
-
+        public string? ProfilePicture { get; set; }
     }
 }
