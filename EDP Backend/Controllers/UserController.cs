@@ -404,15 +404,15 @@ namespace EDP_Backend.Controllers
             {
                 // Update if request is not null
                 user.Name = request.Name ?? user.Name;
-                user.Email = request.Email ?? user.Email;
                 user.Address = request.Address ?? user.Address;
                 user.PhoneNumber = request.PhoneNumber ?? user.PhoneNumber;
                 user.PostalCode = request.PostalCode ?? user.PostalCode;
                 user.ProfilePictureType = request.ProfilePictureType ?? user.ProfilePictureType;
+                user.ProfilePicture = request.ProfilePicture ?? user.ProfilePicture;
 
 
                 // Check if password is correct if request is not null
-                if (request.Password != null)
+                if (request.NewPassword != null)
                 {
                     bool isPasswordCorrect = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
                     if (!isPasswordCorrect)
