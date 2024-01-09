@@ -22,6 +22,7 @@ namespace EDP_Backend
         public DbSet<User> Users { get; set; }
         public DbSet<Group> Groups { get; set; }
         public DbSet<Coupon> Coupons { get; set; }
+        public DbSet<Activity> Activities { get; set; }
         public DbSet<Token> Tokens { get; set; }
     }
 }
