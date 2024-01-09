@@ -1,0 +1,21 @@
+aight so we're gna define the activity object and do crud for it
+activity and all its fields hv been defined
+
+for whatever reason, I'm struggling a lot with just the post request. The error messsage is super vague:
+
+Exception thrown: 'Microsoft.EntityFrameworkCore.DbUpdateException' in Microsoft.EntityFrameworkCore.dll
+An exception of type 'Microsoft.EntityFrameworkCore.DbUpdateException' occurred in Microsoft.EntityFrameworkCore.dll but was not handled in user code
+An error occurred while saving the entity changes. See the inner exception for details.
+
+I'll go check it again tmr. Theoretically should be able to get crud done by tmr.
+
+
+so it seems like i fixed it by doing the intitial create command in the nuget console.
+
+files changed: 
+MyDbContext.cs
+
+files added:
+Activity.cs
+ActivityController.cs
+CreateActivityRequest.cs
