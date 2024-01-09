@@ -20,9 +20,9 @@ namespace EDP_Backend.Models
         public string? DiscountType {  get; set; } = string.Empty;
         [Column(TypeName = "decimal(6,2)")]
         public float? DiscountAmount { get; set; } = 0;
+        public bool? Discounted { get; set; } = false;
         //public array Pictures { get; set; }
         [Column(TypeName = "datetime")]
-
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         [Column(TypeName = "datetime")]
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
