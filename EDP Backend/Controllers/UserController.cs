@@ -393,7 +393,7 @@ namespace EDP_Backend.Controllers
             }
         }
 
-        [SwaggerOperation(Summary = "Update user information based on the token of the logged in user (Needs fixing)")]
+        [SwaggerOperation(Summary = "Update user information based on the token of the logged in user")]
         [HttpPut(), Authorize]
         public IActionResult UpdateUserInfo([FromBody] EditUserRequest request)
         {
@@ -407,6 +407,7 @@ namespace EDP_Backend.Controllers
                 user.Address = request.Address ?? user.Address;
                 user.PhoneNumber = request.PhoneNumber ?? user.PhoneNumber;
                 user.PostalCode = request.PostalCode ?? user.PostalCode;
+                user.OccupationalStatus = request.OccupationalStatus ?? user.OccupationalStatus;
                 user.ProfilePictureType = request.ProfilePictureType ?? user.ProfilePictureType;
                 user.ProfilePicture = request.ProfilePicture ?? user.ProfilePicture;
 
