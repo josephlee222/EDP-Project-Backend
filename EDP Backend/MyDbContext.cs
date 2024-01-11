@@ -24,5 +24,6 @@ namespace EDP_Backend
         public DbSet<Coupon> Coupons { get; set; }
         public DbSet<Activity> Activities { get; set; }
         public DbSet<Token> Tokens { get; set; }
+        public DbSet<Transaction> Transactions { get; set; }
     }
 }

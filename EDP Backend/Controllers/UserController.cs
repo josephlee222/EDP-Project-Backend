@@ -13,9 +13,13 @@ using MimeKit;
 using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 
 namespace EDP_Backend.Controllers
 {
+    using Token = Models.Token;
+    using StripeToken = Stripe.Token;
+
     [ApiController]
     [Route("/User")]
     public class UserController : ControllerBase
@@ -410,6 +414,7 @@ namespace EDP_Backend.Controllers
                 user.OccupationalStatus = request.OccupationalStatus ?? user.OccupationalStatus;
                 user.ProfilePictureType = request.ProfilePictureType ?? user.ProfilePictureType;
                 user.ProfilePicture = request.ProfilePicture ?? user.ProfilePicture;
+                user.Newsletter = request.Newsletter ?? user.Newsletter;
 
 
                 // Check if password is correct if request is not null
@@ -437,6 +442,98 @@ namespace EDP_Backend.Controllers
             }
 
         }
+
+        [SwaggerOperation(Summary = "Initialize a top-up with Stripe")]
+        [HttpGet("Wallet/Topup"), Authorize]
+        public IActionResult TopupWallet([FromQuery] int amount)
+        {
+            // Get user id from token
+            int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            User? user = _context.Users.FirstOrDefault(user => user.Id == id);
+
+            if (user != null)
+            {
+                var options = new PaymentIntentCreateOptions
+                {
+                    Amount = amount * 100,
+                    Currency = "sgd",
+                    Description = "Topup for wallet",
+                    Metadata = new Dictionary<string, string>
+                    {
+                        { "UserId", user.Id.ToString() },
+                        { "Email", user.Email },
+                        { "Name", user.Name },
+                    },
+                };
+
+                var service = new PaymentIntentService();
+                PaymentIntent paymentIntent = service.Create(options);
+
+                return Ok(new { paymentIntent.ClientSecret, paymentIntent.Amount });
+            }
+            else
+            {
+                return BadRequest(Helper.Helper.GenerateError("User does not exist"));
+            }
+        }
+
+
+        [SwaggerOperation(Summary = "Webhook for Stripe API payment response on success")]
+        [HttpPost("Wallet/Topup/Webhook")]
+        public async Task<IActionResult> TopupWalletWebhook()
+        {
+            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+            try
+            {
+                // Verify webhook signature
+                var stripeEvent = EventUtility.ConstructEvent(json, Request.Headers["Stripe-Signature"], Environment.GetEnvironmentVariable("NET_STRIPE_WEBHOOK_SECRET"));
+
+                if (stripeEvent.Type == Events.PaymentIntentSucceeded)
+                {
+                    var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
+                    var userId = paymentIntent.Metadata["UserId"];
+                    var amount = paymentIntent.Amount;
+                    var email = paymentIntent.Metadata["Email"];
+                    var name = paymentIntent.Metadata["Name"];
+
+                    // Update user wallet
+                    User? user = _context.Users.FirstOrDefault(user => user.Id == Convert.ToInt32(userId));
+                    if (user != null)
+                    {
+                        user.Balance += amount / 100;
+                        _context.SaveChanges();
+
+                        // Add transaction record
+                        Transaction transaction = new()
+                        {
+                            User = user,
+                            Amount = amount / 100,
+                            Type = "Topup",
+                            Settled = true,
+                        };
+
+                        _context.Transactions.Add(transaction);
+                        _context.SaveChanges();
+
+                        // Send email
+                        Helper.Helper.SendMail(name, email, "Topup Successful", @$"<h1>Topup Successful</h1><br><p>Amount: ${amount / 100}</p><br><p>Wallet Balance: ${user.Balance / 100}</p>");
+                        return Ok();
+                    }
+                    else
+                    {
+                        return BadRequest(Helper.Helper.GenerateError("User does not exist"));
+                    }
+                }
+                else
+                {
+                    return BadRequest(Helper.Helper.GenerateError("Payment failed"));
+                }
+            } catch (Exception e)
+            {
+                return BadRequest(Helper.Helper.GenerateError(e.Message));
+            }
+        }
+
 
         // ENV variables test + email test
         [SwaggerOperation(Summary = "Test Route, do not use")]
