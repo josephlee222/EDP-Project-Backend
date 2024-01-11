@@ -20,6 +20,7 @@ namespace EDP_Backend.Models
         public string? PostalCode { get; set; }
         [MaxLength(256)]
         public string? Address { get; set; }
+        public Boolean? Newsletter { get; set; }
         [MaxLength(24)]
         public string? ProfilePictureType { get; set; }
         public string? ProfilePicture { get; set; }

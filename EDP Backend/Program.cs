@@ -2,6 +2,7 @@ using EDP_Backend;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Stripe;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -89,5 +90,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 DotNetEnv.Env.Load();
+
+StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("NET_STRIPE_SECRET_KEY");
 
 app.Run();
