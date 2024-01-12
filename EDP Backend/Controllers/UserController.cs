@@ -516,7 +516,7 @@ namespace EDP_Backend.Controllers
                         _context.SaveChanges();
 
                         // Send email
-                        Helper.Helper.SendMail(name, email, "Topup Successful", @$"<h1>Topup Successful</h1><br><p>Amount: ${amount / 100}</p><br><p>Wallet Balance: ${user.Balance / 100}</p>");
+                        Helper.Helper.SendMail(name, email, "Topup Successful", @$"<h1>Topup Successful</h1><br><p>Amount: ${amount / 100}</p><br><p>Wallet Balance: ${user.Balance}</p>");
                         return Ok();
                     }
                     else
