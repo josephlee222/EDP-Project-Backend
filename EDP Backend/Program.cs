@@ -1,4 +1,5 @@
 using EDP_Backend;
+using EDP_Backend.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -22,7 +23,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(allowedOrigins)
     .AllowAnyMethod()
-    .AllowAnyHeader();
+    .AllowAnyHeader()
+    .AllowCredentials();
     });
 });
 
@@ -71,6 +73,7 @@ builder.Services
     ),
     };
 });
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -89,6 +92,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ActionsHub>("/hubs/actions");
 DotNetEnv.Env.Load();
 
 StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("NET_STRIPE_SECRET_KEY");

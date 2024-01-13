@@ -14,6 +14,8 @@ using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore;
 using Stripe;
+using EDP_Backend.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace EDP_Backend.Controllers
 {
@@ -26,14 +28,17 @@ namespace EDP_Backend.Controllers
     {
         private readonly MyDbContext _context;
         private readonly IConfiguration _configuration;
+        // import the IHubContext
+        private readonly IHubContext<ActionsHub> _hubContext;
         public string from = Environment.GetEnvironmentVariable("NET_MAIL_ADDRESS");
         public string password = Environment.GetEnvironmentVariable("NET_MAIL_PASSWORD");
         public string server = Environment.GetEnvironmentVariable("NET_MAIL_SERVER");
         public int port = Convert.ToInt32(Environment.GetEnvironmentVariable("NET_MAIL_PORT"));
-        public UserController(MyDbContext context, IConfiguration configuration)
+        public UserController(MyDbContext context, IConfiguration configuration, IHubContext<ActionsHub> hubContext)
         {
             _context = context;
             _configuration = configuration;
+            _hubContext = hubContext;
         }
 
         [SwaggerOperation(Summary = "Register with name, email and password")]
@@ -517,6 +522,10 @@ namespace EDP_Backend.Controllers
 
                         // Send email
                         Helper.Helper.SendMail(name, email, "Topup Successful", @$"<h1>Topup Successful</h1><br><p>Amount: ${amount / 100}</p><br><p>Wallet Balance: ${user.Balance}</p>");
+
+                        // Send signalR notification
+                        await _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+                        
                         return Ok();
                     }
                     else
