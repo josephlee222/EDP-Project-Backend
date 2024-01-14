@@ -520,11 +520,11 @@ namespace EDP_Backend.Controllers
                         _context.Transactions.Add(transaction);
                         _context.SaveChanges();
 
-                        // Send email
-                        Helper.Helper.SendMail(name, email, "Topup Successful", @$"<h1>Topup Successful</h1><br><p>Amount: ${amount / 100}</p><br><p>Wallet Balance: ${user.Balance}</p>");
-
                         // Send signalR notification
                         await _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+
+                        // Send email
+                        Helper.Helper.SendMail(name, email, "Topup Successful", @$"<h1>Topup Successful</h1><br><p>Amount: ${amount / 100}</p><br><p>Wallet Balance: ${user.Balance}</p>");
                         
                         return Ok();
                     }
