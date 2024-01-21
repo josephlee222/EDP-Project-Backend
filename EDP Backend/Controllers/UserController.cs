@@ -543,6 +543,24 @@ namespace EDP_Backend.Controllers
             }
         }
 
+        [SwaggerOperation(Summary = "Get current user transaction records")]
+        [HttpGet("Transactions"), Authorize]
+        public IActionResult GetTransactions()
+        {
+            // Get user id from token
+            int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            User? user = _context.Users.Include(u => u.Transactions).FirstOrDefault(user => user.Id == id);
+
+            if (user != null)
+            {
+                return Ok(user.Transactions);
+            }
+            else
+            {
+                return BadRequest(Helper.Helper.GenerateError("User does not exist"));
+            }
+        }
+
 
         // ENV variables test + email test
         [SwaggerOperation(Summary = "Test Route, do not use")]
