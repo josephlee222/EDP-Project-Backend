@@ -37,5 +37,6 @@ namespace EDP_Backend.Models
         [Column(TypeName = "datetime")]
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
         public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }

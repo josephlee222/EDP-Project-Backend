@@ -170,7 +170,7 @@ namespace EDP_Backend.Controllers
             request.Password = request.Password.Trim();
 
             // Check if email is already registered
-            User? existingUser = _context.Users.FirstOrDefault(user => user.Email == request.Email);
+            User? existingUser = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Email == request.Email);
             if (existingUser == null || existingUser.IsDeleted)
             {
                 return BadRequest(Helper.Helper.GenerateError("Wrong login details provided. Please try again."));
@@ -188,6 +188,9 @@ namespace EDP_Backend.Controllers
             {
                 return BadRequest(Helper.Helper.GenerateError("Account is not verified. Please check your e-mail inbox"));
             }
+
+            // Fliter out read notifications
+            existingUser.Notifications = existingUser.Notifications.Where(notification => !notification.Read).ToList();
 
             var token = CreateToken(existingUser);
             return Ok(new { user = existingUser, token });
@@ -316,12 +319,15 @@ namespace EDP_Backend.Controllers
         public IActionResult Refresh()
         {
             int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
-            User? user = _context.Users.FirstOrDefault(user => user.Id == id);
+            User? user = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Id == id);
 
             if (user == null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Invalid token"));
             }
+
+            // fliter to only get notifications that are not read
+            user.Notifications = user.Notifications.Where(notification => !notification.Read).ToList();
 
             var token = CreateToken(user);
             return Ok(new { user, token });
@@ -564,10 +570,17 @@ namespace EDP_Backend.Controllers
 
         // ENV variables test + email test
         [SwaggerOperation(Summary = "Test Route, do not use")]
-        [HttpGet("Test")]
+        [HttpGet("Test"), Authorize]
         public IActionResult TestingStuff()
         {
-            Helper.Helper.SendMail("Joseph Lee", "facebooklee52@gmail.com", "Test Email", @$"<h1>Test Email with function now</h1><br>{from}");
+            int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+
+            // if id is not null, send notification
+            if (id != 0)
+            {
+                _context.SendNotification(id, "Test Notification", "Test Notification Body", "Test Notification Subtitle", "Go to Profile", "/profile");
+            }
+            //Helper.Helper.SendMail("Joseph Lee", "facebooklee52@gmail.com", "Test Email", @$"<h1>Test Email with function now</h1><br>{from}");
             return Ok(Environment.GetEnvironmentVariable("TEST_MESSAGE"));
         }
 
