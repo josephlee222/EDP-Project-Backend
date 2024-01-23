@@ -55,11 +55,14 @@ namespace EDP_Backend
                 ActionUrl = actionUrl
             };
 
-            await _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("notification", notification);
+            
             Notifications.Add(notification);
             SaveChanges();
 
-            
+            notification.User = null;
+            await _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("notification", notification);
+
+
         }
     }
 }

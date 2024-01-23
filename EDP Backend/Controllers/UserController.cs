@@ -190,7 +190,7 @@ namespace EDP_Backend.Controllers
             }
 
             // Fliter out read notifications
-            existingUser.Notifications = existingUser.Notifications.Where(notification => !notification.Read).ToList();
+            existingUser.Notifications = existingUser.Notifications.OrderByDescending(n => n.CreatedAt).Where(notification => !notification.Read).ToList();
 
             var token = CreateToken(existingUser);
             return Ok(new { user = existingUser, token });
@@ -327,7 +327,7 @@ namespace EDP_Backend.Controllers
             }
 
             // fliter to only get notifications that are not read
-            user.Notifications = user.Notifications.Where(notification => !notification.Read).ToList();
+            user.Notifications = user.Notifications.OrderByDescending(n => n.CreatedAt).Where(notification => !notification.Read).ToList();
 
             var token = CreateToken(user);
             return Ok(new { user, token });
@@ -396,10 +396,13 @@ namespace EDP_Backend.Controllers
         public IActionResult GetUserInfo()
         {
             int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
-            User? user = _context.Users.FirstOrDefault(user => user.Id == id);
+            User? user = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Id == id);
 
             if (user != null)
             {
+                // fliter to only get notifications that are not read
+                user.Notifications = user.Notifications.OrderByDescending(n => n.CreatedAt).Where(notification => !notification.Read).ToList();
+
                 return Ok(user);
             }
             else
@@ -528,6 +531,7 @@ namespace EDP_Backend.Controllers
 
                         // Send signalR notification
                         await _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+                        _context.SendNotification(user.Id, "Payment Received", "$" + amount / 100 + " has been added to your balance.", "General", "View Wallet", "/profile/wallet");
 
                         // Send email
                         Helper.Helper.SendMail(name, email, "Topup Successful", @$"<h1>Topup Successful</h1><br><p>Amount: ${amount / 100}</p><br><p>Wallet Balance: ${user.Balance}</p>");
@@ -578,10 +582,38 @@ namespace EDP_Backend.Controllers
             // if id is not null, send notification
             if (id != 0)
             {
-                _context.SendNotification(id, "Test Notification", "Test Notification Body", "Test Notification Subtitle", "Go to Profile", "/profile");
+                _context.SendNotification(id, "Test Notification", "Test Notification Body", "General", "Go to Profile", "/profile");
             }
             //Helper.Helper.SendMail("Joseph Lee", "facebooklee52@gmail.com", "Test Email", @$"<h1>Test Email with function now</h1><br>{from}");
             return Ok(Environment.GetEnvironmentVariable("TEST_MESSAGE"));
+        }
+
+        [SwaggerOperation(Summary = "Mark notification as read")]
+        [HttpGet("Notification/Read"), Authorize]
+        public async Task<IActionResult> MarkNotificationAsRead([FromQuery] int notificationId)
+        {
+            int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            User? user = _context.Users.Include(u => u.Notifications).FirstOrDefault(user => user.Id == id);
+
+            if (user != null)
+            {
+                Notification? notification = user.Notifications.FirstOrDefault(n => n.Id == notificationId);
+                if (notification != null)
+                {
+                    notification.Read = true;
+                    _context.SaveChanges();
+                    await _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+                    return Ok();
+                }
+                else
+                {
+                    return BadRequest(Helper.Helper.GenerateError("Notification does not exist"));
+                }
+            }
+            else
+            {
+                return BadRequest(Helper.Helper.GenerateError("User does not exist"));
+            }
         }
 
         private string CreateToken(User user)
