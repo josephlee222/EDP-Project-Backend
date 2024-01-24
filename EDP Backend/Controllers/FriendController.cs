@@ -26,22 +26,22 @@ namespace EDP_Backend.Controllers
 
         [SwaggerOperation(Summary = "Get all current friends")]
         [HttpGet(), Authorize]
-        public IActionResult GetActivities()
+        public IActionResult GetFriends()
         {
-            return Ok(_context.Activities);
+            return Ok(_context.Friends);
         }
 
 
-        [SwaggerOperation(Summary = "Get a specific activity")]
+        [SwaggerOperation(Summary = "Get a specific friend")]
         [HttpGet("{id}"), Authorize]
-        public IActionResult Getactivity(int id)
+        public IActionResult GetFriend(int id)
         {
-            Activity? activity = _context.Activities.Find(id);
-            if (activity == null)
+            Friend? Friend = _context.Friends.Find(id);
+            if (Friend == null)
             {
                 return NotFound(Helper.Helper.GenerateError("Friend not found"));
             }
-            return Ok(activity);
+            return Ok(Friend);
         }
     }
 }

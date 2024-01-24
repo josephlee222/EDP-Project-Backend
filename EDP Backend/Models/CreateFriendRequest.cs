@@ -3,11 +3,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EDP_Backend.Models
 {
-    public class Friend
+    public class CreateFriendRequest
     {
-        public int Id { get; set; }
         [Required]
         public int FriendID { get; set; }
-        public DateTime AddedAt { get; set; } = DateTime.Now;
     }
 }
