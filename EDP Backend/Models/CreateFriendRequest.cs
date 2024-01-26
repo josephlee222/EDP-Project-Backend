@@ -1,11 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EDP_Backend.Models
 {
     public class CreateFriendRequest
     {
         [Required]
-        public int FriendID { get; set; }
+        public int SenderID { get; set; }
+        [Required]
+        public int RecipientID { get; set; }
     }
 }

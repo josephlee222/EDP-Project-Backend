@@ -45,17 +45,10 @@ namespace EDP_Backend.Controllers
 
         [SwaggerOperation(Summary = "Create a new group")]
         [HttpPost(), Authorize]
-        public IActionResult CreateGroup([FromBody] CreateGroupRequest request)
+        public IActionResult CreateGroup([FromBody] CreateGroup request)
         {
             string name = request.Name.Trim();
             string description = request.Description.Trim();
-
-            // Check if name is already registered (TO BE REMOVED)
-            Group? existingGroup = _context.Groups.FirstOrDefault(group => group.Name == name);
-            if (existingGroup != null)
-            {
-                return BadRequest(Helper.Helper.GenerateError("Group with this name already exists"));
-            }
 
             // Create group
             Group group = new Group
@@ -73,7 +66,7 @@ namespace EDP_Backend.Controllers
 
         [SwaggerOperation(Summary = "Update a specific group")]
         [HttpPut("{id}"), Authorize(Roles = "Admin")]
-        public IActionResult Editgroup(int id, [FromBody] EditGroupRequest request)
+        public IActionResult Editgroup(int id, [FromBody] EditGroup request)
         {
             // Get group
             Group? group = _context.Groups.Find(id);

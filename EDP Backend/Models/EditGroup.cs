@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EDP_Backend.Models
 {
-    public class EditGroupRequest
+    public class EditGroup
     {
         [MaxLength(32)]
         public string Name { get; set; } = string.Empty;
