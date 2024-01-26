@@ -1,21 +1,16 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
-using MailKit.Net.Smtp;
 using System.Security.Claims;
 using System.Text;
 using EDP_Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using System.Security.Cryptography;
-
 using Microsoft.IdentityModel.Tokens;
-using MimeKit;
 using Swashbuckle.AspNetCore.Annotations;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore;
 using Stripe;
 using EDP_Backend.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json;
 
 namespace EDP_Backend.Controllers
 {
@@ -194,6 +189,234 @@ namespace EDP_Backend.Controllers
 
             var token = CreateToken(existingUser);
             return Ok(new { user = existingUser, token });
+        }
+
+        [SwaggerOperation(Summary = "Login/Register with Google OAuth")]
+        [AllowAnonymous]
+        [HttpPost("Google")]
+        public IActionResult Google([FromBody] OAuthRequest request)
+        {
+            // trim whitespace
+            request.Token = request.Token.Trim();
+
+            // Request google profile
+            var client = new HttpClient();
+            var response = client.GetAsync($"https://www.googleapis.com/oauth2/v3/userinfo?access_token={request.Token}").Result;
+            var content = response.Content.ReadAsStringAsync().Result;
+            var googleProfile = JsonConvert.DeserializeObject<GoogleProfile>(content);
+            
+
+            // Check if sub is already registered
+            User? existingUser = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.GoogleId == googleProfile.Sub);
+            if (existingUser == null)
+            {
+                // Check if email is already registered
+                existingUser = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Email == googleProfile.Email);
+
+                if (existingUser != null)
+                {
+                    // Deny registration if email is already registered
+                    return BadRequest(Helper.Helper.GenerateError("This Google e-mail address is already registered with another account"));
+                }
+                
+                // Register user
+                User user = new User
+                {
+                    Name = googleProfile.Name,
+                    Email = googleProfile.Email,
+                    GoogleId = googleProfile.Sub,
+                    IsVerified = true
+                };
+
+                _context.Users.Add(user);
+                _context.SaveChanges();
+
+                existingUser = _context.Users.FirstOrDefault(user => user.Email == googleProfile.Email);
+            }
+
+            // Check if user is not verified
+            if (!existingUser.IsVerified)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Account is not verified. Please check your e-mail inbox"));
+            }
+
+            // Check if the user matches the google profile
+            if (existingUser.GoogleId != googleProfile.Sub)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Unable to login with this Google account"));
+            }
+
+            // Fliter out read notifications
+            existingUser.Notifications = existingUser.Notifications.OrderByDescending(n => n.CreatedAt).Where(notification => !notification.Read).ToList();
+
+            var token = CreateToken(existingUser);
+            return Ok(new { user = existingUser, token });
+        }
+
+
+        [SwaggerOperation(Summary = "Login/Register with Facebook OAuth")]
+        [AllowAnonymous]
+        [HttpPost("Facebook")]
+        public IActionResult Facebook([FromBody] OAuthRequest request)
+        {
+            // trim whitespace
+            request.Token = request.Token.Trim();
+
+            // Request Facebook profile
+            var client = new HttpClient();
+            var response = client.GetAsync($"https://graph.facebook.com/me?fields=id,name,email&access_token={request.Token}").Result;
+            var content = response.Content.ReadAsStringAsync().Result;
+            var facebookProfile = JsonConvert.DeserializeObject<FacebookProfile>(content);
+
+
+            // Check if sub is already registered
+            User? existingUser = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.FacebookId == facebookProfile.Id);
+            if (existingUser == null)
+            {
+                // Check if email is already registered
+                existingUser = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Email == facebookProfile.Email);
+
+                if (existingUser != null)
+                {
+                    // Deny registration if email is already registered
+                    return BadRequest(Helper.Helper.GenerateError("The Facebook account E-mail address is already registered with another account"));
+                }
+
+                // Register user
+                User user = new User
+                {
+                    Name = facebookProfile.Name,
+                    Email = facebookProfile.Email,
+                    FacebookId = facebookProfile.Id,
+                    IsVerified = true
+                };
+
+                _context.Users.Add(user);
+                _context.SaveChanges();
+
+                existingUser = _context.Users.FirstOrDefault(user => user.Email == facebookProfile.Email);
+            }
+
+            // Check if user is not verified
+            if (!existingUser.IsVerified)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Account is not verified. Please check your e-mail inbox"));
+            }
+
+            // Check if the user matches the google profile
+            if (existingUser.FacebookId != facebookProfile.Id)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Unable to login with this Google account"));
+            }
+
+            // Fliter out read notifications
+            existingUser.Notifications = existingUser.Notifications.OrderByDescending(n => n.CreatedAt).Where(notification => !notification.Read).ToList();
+
+            var token = CreateToken(existingUser);
+            return Ok(new { user = existingUser, token });
+        }
+
+        [SwaggerOperation(Summary = "Link/unlink a Facebook account to user")]
+        [HttpPost("Facebook/Link"), Authorize]
+        public IActionResult LinkFacebook([FromBody] OAuthRequest request)
+        {
+            int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            User? user = _context.Users.FirstOrDefault(user => user.Id == id);
+
+            if (user == null)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
+
+            // trim whitespace
+            request.Token = request.Token.Trim();
+
+            // Request Facebook profile
+            var client = new HttpClient();
+            var response = client.GetAsync($"https://graph.facebook.com/me?fields=id,name,email&access_token={request.Token}").Result;
+            var content = response.Content.ReadAsStringAsync().Result;
+            var facebookProfile = JsonConvert.DeserializeObject<FacebookProfile>(content);
+
+            // If user already has a Facebook account, unlink it
+            if (user.FacebookId != null)
+            {
+                // Check if the user matches the facebook profile
+                if (user.FacebookId != facebookProfile.Id)
+                {
+                    return BadRequest(Helper.Helper.GenerateError("Logged in with a different Facebook account"));
+                }
+
+                user.FacebookId = null;
+                _context.SaveChanges();
+                _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+                return Ok(new { message = "Facebook account unlinked" });
+            }
+
+            // Check if sub is already registered
+            User? existingUser = _context.Users.FirstOrDefault(user => user.FacebookId == facebookProfile.Id);
+            if (existingUser != null)
+            {
+                // Deny registration if email is already registered
+                return BadRequest(Helper.Helper.GenerateError("This Facebook account is already registered with another account"));
+            }
+
+            // Link Facebook account
+            user.FacebookId = facebookProfile.Id;
+            _context.SaveChanges();
+            _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+
+            return Ok(new { message = "Facebook account linked" });
+        }
+
+        [SwaggerOperation(Summary = "Link/unlink a Google account to user")]
+        [HttpPost("Google/Link"), Authorize]
+        public IActionResult LinkGoogle([FromBody] OAuthRequest request) {
+            int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            User? user = _context.Users.FirstOrDefault(user => user.Id == id);
+        
+            if (user == null)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
+
+            // trim whitespace
+            request.Token = request.Token.Trim();
+
+            // Request Google profile
+            var client = new HttpClient();
+            var response = client.GetAsync($"https://www.googleapis.com/oauth2/v3/userinfo?access_token={request.Token}").Result;
+            var content = response.Content.ReadAsStringAsync().Result;
+            var googleProfile = JsonConvert.DeserializeObject<GoogleProfile>(content);
+
+            // If user already has a Google account, unlink it
+            if (user.GoogleId != null)
+            {
+                // Check if the user matches the google profile
+                if (user.GoogleId != googleProfile.Sub)
+                {
+                    return BadRequest(Helper.Helper.GenerateError("Logged in with a different Google account"));
+                }
+
+                user.GoogleId = null;
+                _context.SaveChanges();
+                _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+                return Ok(new { message = "Google account unlinked" });
+            }
+
+            // Check if sub is already registered
+            User? existingUser = _context.Users.FirstOrDefault(user => user.GoogleId == googleProfile.Sub);
+            if (existingUser != null)
+            {
+                // Deny registration if sub is already registered
+                return BadRequest(Helper.Helper.GenerateError("This Google account is already registered with another account"));
+            }
+
+            // Link Google account
+            user.GoogleId = googleProfile.Sub;
+            _context.SaveChanges();
+            _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+
+            return Ok(new { message = "Google account linked" });
         }
 
         [SwaggerOperation(Summary = "Request for a password reset")]
