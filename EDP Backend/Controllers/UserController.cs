@@ -449,6 +449,54 @@ namespace EDP_Backend.Controllers
             return Ok();
         }
 
+        [SwaggerOperation(Summary = "Resend a verification email to a email address")]
+        [AllowAnonymous]
+        [HttpPost("Resend")]
+        public IActionResult Resend([FromBody] ForgotRequest request)
+        {
+            // trim whitespace
+            request.Email = request.Email.Trim();
+
+            // Check if email is already registered
+            User? existingUser = _context.Users.FirstOrDefault(user => user.Email == request.Email);
+
+            if (existingUser == null || existingUser.IsDeleted)
+            {
+                return BadRequest(Helper.Helper.GenerateError("E-mail is invaild. Please try again."));
+            }
+
+            // Check if email is already verified
+            if (existingUser.IsVerified)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Email already verified"));
+            }
+
+            // Check if token already exists, if so, delete it
+            Token? existingToken = _context.Tokens.FirstOrDefault(token => token.User == existingUser && token.Type == "Verify");
+            if (existingToken != null)
+            {
+                _context.Tokens.Remove(existingToken);
+            }
+
+            // Create new token
+            Token token = new()
+            {
+                User = existingUser,
+                Type = "Verify"
+            };
+            _context.Tokens.Add(token);
+            _context.SaveChanges();
+
+            // Send email with token
+            var website = Environment.GetEnvironmentVariable("NET_WEBSITE");
+            if (website != null)
+            {
+                   Helper.Helper.SendMail(existingUser.Name, existingUser.Email, "Verify your UPlay Account", @$"<h1>Verify your UPlay account</h1><br><p>Thank you for using UPlay. Please click on the link below to verify your email. (This email design is temporary and subject to change)</p><br>{website}/verify?t={token.Code}");
+            }
+
+            return Ok();
+        }
+
         [SwaggerOperation(Summary = "Check whether a token is still valid for use")]
         [AllowAnonymous]
         [HttpGet("Check/{token}")]
