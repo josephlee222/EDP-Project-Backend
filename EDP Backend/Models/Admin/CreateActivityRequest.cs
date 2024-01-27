@@ -27,6 +27,7 @@ namespace EDP_Backend.Models.Admin
         public string? Company { get; set; }
         public string? DiscountType { get; set; }
         public float? DiscountAmount { get; set; }
+        public bool? Discounted { get; set; } = false;
         //public array Pictures { get; set; }
     }
 }

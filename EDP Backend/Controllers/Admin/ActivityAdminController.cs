@@ -44,6 +44,7 @@ namespace EDP_Backend.Controllers.Admin
             string? location = request.Location?.Trim();
             string? discounttype = request.DiscountType?.Trim();
             float? discountAmount = request.DiscountAmount;
+            bool? discounted = request.Discounted;
 
 
             // Check if name is already registered
@@ -66,6 +67,7 @@ namespace EDP_Backend.Controllers.Admin
                 Company = company,
                 Location = location,
                 DiscountAmount = discountAmount,
+                Discounted = discounted,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
 
@@ -113,8 +115,8 @@ namespace EDP_Backend.Controllers.Admin
             int? ageLimit = request.AgeLimit;
             string? company = request.Company?.Trim();
             string? location = request.Location?.Trim();
-            string? discounttype = request.DiscountType?.Trim();
             float? discountAmount = request.DiscountAmount;
+            bool? discounted = request.Discounted;
 
             //activity.Code = code ?? activity.Code;
 
@@ -128,6 +130,7 @@ namespace EDP_Backend.Controllers.Admin
             activity.Company = company ?? activity.Company;
             activity.Location = location ?? activity.Location;
             activity.DiscountAmount = discountAmount ?? activity.DiscountAmount;
+            activity.Discounted = discounted ?? activity.Discounted;
 
             _context.SaveChanges();
             return Ok(activity);

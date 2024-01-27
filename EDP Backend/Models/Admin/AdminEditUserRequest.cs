@@ -19,6 +19,7 @@ namespace EDP_Backend.Models
         public string? PostalCode { get; set; }
         [MaxLength(256)]
         public string? Address { get; set; }
+        public bool? Newsletter { get; set; }
         [MaxLength(24)]
         public string? ProfilePictureType { get; set; }
         public bool? IsAdmin { get; set; } = false;
