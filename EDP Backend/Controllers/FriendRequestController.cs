@@ -46,7 +46,7 @@ namespace EDP_Backend.Controllers
             int RecipientID = request.RecipientID;
 
             // Check if name is already registered
-            FriendRequest? existingFriendRequest = _context.FriendRequests.FirstOrDefault(friendrequest => friendrequest.FriendRequestID == FriendRequestID);
+            FriendRequest? existingFriendRequest = _context.FriendRequests.FirstOrDefault(friendrequest => friendrequest.SenderID == SenderID && friendrequest.RecipientID == RecipientID);
             if (existingFriendRequest != null)
             {
                 return BadRequest(Helper.Helper.GenerateError("FriendRequest with this name already exists"));
