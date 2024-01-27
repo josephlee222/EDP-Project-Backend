@@ -28,6 +28,10 @@ namespace EDP_Backend.Models
         public string? PostalCode { get; set; }
         [MaxLength(256)]
         public string? Address { get; set; }
+        [MaxLength(64)]
+        public string? GoogleId { get; set; }
+        [MaxLength(64)]
+        public string? FacebookId { get; set; }
         public Boolean Newsletter { get; set; } = false;
         public Boolean IsAdmin { get; set; } = false;
         public Boolean IsDeleted { get; set; } = false;
@@ -37,5 +41,6 @@ namespace EDP_Backend.Models
         [Column(TypeName = "datetime")]
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
         public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     }
 }
