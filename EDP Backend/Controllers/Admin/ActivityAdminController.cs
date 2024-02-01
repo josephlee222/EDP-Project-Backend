@@ -22,7 +22,7 @@ namespace EDP_Backend.Controllers.Admin
         }
 
         [SwaggerOperation(Summary = "Get all current activities")]
-        [HttpGet(), /*Authorize(Roles = "Admin")*/]
+        [HttpGet(), Authorize(Roles = "Admin")]
         public IActionResult GetActivities()
         {
             return Ok(_context.Activities);

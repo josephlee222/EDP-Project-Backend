@@ -1,21 +1,32 @@
-aight so we're gna define the activity object and do crud for it
-activity and all its fields hv been defined
+we have 5 models to work on for backend:
+	activity
+	availability
+	booking
+	category
+	reviews
 
-for whatever reason, I'm struggling a lot with just the post request. The error messsage is super vague:
+we'll see how we're gna add tags later ig
 
-Exception thrown: 'Microsoft.EntityFrameworkCore.DbUpdateException' in Microsoft.EntityFrameworkCore.dll
-An exception of type 'Microsoft.EntityFrameworkCore.DbUpdateException' occurred in Microsoft.EntityFrameworkCore.dll but was not handled in user code
-An error occurred while saving the entity changes. See the inner exception for details.
+checklist:
+	activity - done (duh)
+	availability - done
+	booking - done
+	category - done
+	reviews - done with model
 
-I'll go check it again tmr. Theoretically should be able to get crud done by tmr.
+think through the admin/user access for bookings, 
+cuz a standard get request for bookings would mean a customer can get everyone else's bookings.
+I bet The user model has a simiar thing going on so mabe ask joseph.
 
+27/1/2024
+I'm more or less done with all my entities for backend. There's a couple issues, though.
+It's mostly easily changeable like what should the admin/customer have access to,
+but also I need to figure out whether I have to make a catgoryParticipants model or smt like that.
+Depends on whether 1 activity can b in multiple categories, I guess.
 
-so it seems like i fixed it by doing the intitial create command in the nuget console.
+so here's the todo list for backend:
+	decide what should customers hv access to
+	Is there a need for another model between activiy and category
+	also just check everything again
 
-files changed: 
-MyDbContext.cs
-
-files added:
-Activity.cs
-ActivityController.cs
-CreateActivityRequest.cs
+After this, we probably won't need to touch backend again so that's nice.

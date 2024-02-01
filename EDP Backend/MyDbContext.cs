@@ -33,6 +33,10 @@ namespace EDP_Backend
         public DbSet<FriendRequest> FriendRequests { get; set; }
         public DbSet<Coupon> Coupons { get; set; }
         public DbSet<Activity> Activities { get; set; }
+        public DbSet<Availability> Availabilities { get; set; }
+        public DbSet<Booking> Bookings { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Review> Reviews { get; set; }
         public DbSet<Token> Tokens { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<Notification> Notifications { get; set; }
