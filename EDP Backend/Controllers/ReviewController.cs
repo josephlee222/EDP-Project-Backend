@@ -34,7 +34,8 @@ namespace EDP_Backend.Controllers.Admin
         [HttpPost()]
         public IActionResult CreateReview([FromBody] CreateReviewRequest request)
         {
-            int userId = request.UserId;
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+
             int activityId = request.ActivityId;
             int rating = request.Rating;
             string? description = request.Description;
