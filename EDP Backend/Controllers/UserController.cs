@@ -11,6 +11,9 @@ using Stripe;
 using EDP_Backend.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
+using Fido2NetLib;
+using Fido2NetLib.Objects;
+using Microsoft.AspNetCore.Http.Json;
 
 namespace EDP_Backend.Controllers
 {
@@ -25,15 +28,17 @@ namespace EDP_Backend.Controllers
         private readonly IConfiguration _configuration;
         // import the IHubContext
         private readonly IHubContext<ActionsHub> _hubContext;
-        public string from = Environment.GetEnvironmentVariable("NET_MAIL_ADDRESS");
+		private readonly IFido2 _fido2;
+		public string from = Environment.GetEnvironmentVariable("NET_MAIL_ADDRESS");
         public string password = Environment.GetEnvironmentVariable("NET_MAIL_PASSWORD");
         public string server = Environment.GetEnvironmentVariable("NET_MAIL_SERVER");
         public int port = Convert.ToInt32(Environment.GetEnvironmentVariable("NET_MAIL_PORT"));
-        public UserController(MyDbContext context, IConfiguration configuration, IHubContext<ActionsHub> hubContext)
+        public UserController(MyDbContext context, IConfiguration configuration, IHubContext<ActionsHub> hubContext, IFido2 fido2)
         {
             _context = context;
             _configuration = configuration;
             _hubContext = hubContext;
+            _fido2 = fido2;
         }
 
         [SwaggerOperation(Summary = "Register with name, email and password")]
@@ -887,7 +892,64 @@ namespace EDP_Backend.Controllers
             }
         }
 
-        private string CreateToken(User user)
+        [SwaggerOperation(Summary = "Mark all notifications as read")]
+        [HttpGet("Notification/ReadAll"), Authorize]
+        public async Task<IActionResult> MarkAllNotificationsAsRead()
+        {
+			int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+			User? user = _context.Users.Include(u => u.Notifications).FirstOrDefault(user => user.Id == id);
+
+			if (user != null)
+            {
+				foreach (Notification notification in user.Notifications)
+                {
+					notification.Read = true;
+				}
+				_context.SaveChanges();
+				await _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+				return Ok();
+			}
+			else
+            {
+				return BadRequest(Helper.Helper.GenerateError("User does not exist"));
+			}
+		}
+
+        [SwaggerOperation(Summary = "Make FIDO2 credential options for passwordless sign-in")]
+        [HttpPost("Passkey/Setup"), Authorize]
+        public async Task<IActionResult> MakeCredentialOptions()
+        {
+			int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+			User? user = _context.Users.FirstOrDefault(user => user.Id == id);
+
+			if (user != null)
+            {
+				Fido2User fido2User = new()
+                {
+					Id = Encoding.UTF8.GetBytes(user.Id.ToString()),
+					Name = user.Email,
+					DisplayName = user.Name
+                };
+
+                var options = _fido2.RequestNewCredential(fido2User, new List<PublicKeyCredentialDescriptor>()).ToJson();
+				return Ok(options);
+			}
+			else
+            {
+				return BadRequest(Helper.Helper.GenerateError("User does not exist"));
+			}
+		}
+
+        [SwaggerOperation(Summary = "Save FIDO2 credentials for passwordless sign-in")]
+        [HttpPost("Passkey/Save"), Authorize]
+        public async Task<IActionResult> SaveCredentialOptions([FromBody] SaveCredentialsOptionsRequest request)
+        {
+            var optionsJson = request.Options;
+			var options = CredentialCreateOptions.FromJson(optionsJson);
+			return Ok(new { request.AttestationResponse, options });
+		}
+
+		private string CreateToken(User user)
         {
             string secret = _configuration.GetValue<string>("Authentication:Secret");
             int tokenExpiresDays = _configuration.GetValue<int>("Authentication:TokenExpiresDays");
@@ -911,5 +973,7 @@ namespace EDP_Backend.Controllers
             string token = tokenHandler.WriteToken(securityToken);
             return token;
         }
+
+
     }
 }
