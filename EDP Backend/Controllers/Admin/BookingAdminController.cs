@@ -2,7 +2,9 @@
 using EDP_Backend.Models.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 
@@ -33,7 +35,15 @@ namespace EDP_Backend.Controllers.Admin
         [HttpPost(), Authorize(Roles = "Admin")]
         public IActionResult CreateBooking([FromBody] CreateBookingRequest request)
         {
-            int userId = request.UserId;
+            int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            User? user = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Id == id);
+
+            if (user == null)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
+
+            int userId = id;
             int activityId = request.ActivityId;
             DateTime date = request.Date;
             int pax = request.Pax;
@@ -87,17 +97,24 @@ namespace EDP_Backend.Controllers.Admin
             {
                 return NotFound(Helper.Helper.GenerateError("booking not found"));
             }
+            int UserId = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            User? user = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Id == id);
+
+            if (user == null)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
 
             // Update booking
 
-            int userId = request.UserId;
-            int activityId = request.ActivityId;
             DateTime date = request.Date;
             int pax = request.Pax;
             string? notes = request.Notes;
+            if(notes == null)
+            {
+                notes = "";
+            }
 
-            booking.UserId = userId;
-            booking.ActivityId = activityId;
             booking.Date = date;
             booking.Pax = pax;
             booking.Notes = notes;

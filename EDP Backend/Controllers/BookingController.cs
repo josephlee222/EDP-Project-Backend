@@ -2,7 +2,9 @@
 using EDP_Backend.Models.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 
@@ -22,18 +24,28 @@ namespace EDP_Backend.Controllers.Admin
         }
 
         [SwaggerOperation(Summary = "Get all current bookings")]
-        [HttpGet(), Authorize(Roles = "Admin")]
+        [HttpGet(), Authorize]
         public IActionResult GetBookings()
         {
-            return Ok(_context.Bookings);
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            var booking = _context.Bookings.Where(x => x.UserId == userId);
+            return Ok(booking);
         }
 
 
         [SwaggerOperation(Summary = "Create a new booking")]
-        [HttpPost(), Authorize(Roles = "Admin")]
+        [HttpPost(), Authorize]
         public IActionResult CreateBooking([FromBody] CreateBookingRequest request)
         {
-            int userId = request.UserId;
+            int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            User? user = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Id == id);
+
+            if (user == null)
+            {
+                return BadRequest(Helper.Helper.GenerateError("Invalid token"));
+            }
+
+            int userId = id;
             int activityId = request.ActivityId;
             DateTime date = request.Date;
             int pax = request.Pax;
@@ -45,6 +57,10 @@ namespace EDP_Backend.Controllers.Admin
             if (existingBooking != null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Booking with this name already exists"));
+            }
+            if (notes == null)
+            {
+                notes = "";
             }
 
             // Create booking
@@ -64,10 +80,12 @@ namespace EDP_Backend.Controllers.Admin
 
 
         [SwaggerOperation(Summary = "Get a specific booking")]
-        [HttpGet("{id}"), Authorize(Roles = "Admin")]
+        [HttpGet("{id}"), Authorize]
         public IActionResult Getbooking(int id)
         {
-            Booking? booking = _context.Bookings.Find(id);
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+
+            Booking? booking = _context.Bookings.Where(x => x.UserId == userId).FirstOrDefault(x => x.Id == id);
             if (booking == null)
             {
                 return NotFound(Helper.Helper.GenerateError("booking not found"));
@@ -76,11 +94,13 @@ namespace EDP_Backend.Controllers.Admin
         }
 
         [SwaggerOperation(Summary = "Update a specific booking")]
-        [HttpPut("{id}"), Authorize(Roles = "Admin")]
+        [HttpPut("{id}"), Authorize]
         public IActionResult Editbooking(int id, [FromBody] EditBookingRequest request)
         {
-            // Get booking
-            Booking? booking = _context.Bookings.Find(id);
+
+            int UserId = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+
+            Booking? booking = _context.Bookings.Where(x => x.UserId == UserId).FirstOrDefault(x => x.Id == id);
 
             // Check if booking exists
             if (booking == null)
@@ -88,16 +108,18 @@ namespace EDP_Backend.Controllers.Admin
                 return NotFound(Helper.Helper.GenerateError("booking not found"));
             }
 
+
             // Update booking
 
-            int userId = request.UserId;
-            int activityId = request.ActivityId;
             DateTime date = request.Date;
             int pax = request.Pax;
             string? notes = request.Notes;
 
-            booking.UserId = userId;
-            booking.ActivityId = activityId;
+            if(notes == null)
+            {
+                notes = "";
+            }
+
             booking.Date = date;
             booking.Pax = pax;
             booking.Notes = notes;

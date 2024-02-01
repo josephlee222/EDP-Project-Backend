@@ -3,6 +3,7 @@ using EDP_Backend.Models.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Security.Claims;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 
@@ -60,6 +61,17 @@ namespace EDP_Backend.Controllers.Admin
             return Ok(review);
         }
 
+        [SwaggerOperation(Summary = "Get all reviews for a specific activity")]
+        [HttpGet("Activity/{id}")]
+        public IActionResult GetReviewForActivity(int id)
+        {
+            var review = _context.Reviews.Where(x => x.ActivityId == id);
+            if (review == null)
+            {
+                return NotFound(Helper.Helper.GenerateError("review not found"));
+            }
+            return Ok(review);
+        }
 
         [SwaggerOperation(Summary = "Get a specific review")]
         [HttpGet("{id}")]
@@ -74,11 +86,13 @@ namespace EDP_Backend.Controllers.Admin
         }
 
         [SwaggerOperation(Summary = "Update a specific review")]
-        [HttpPut("{id}")]
+        [HttpPut("{id}"), Authorize]
         public IActionResult Editreview(int id, [FromBody] EditReviewRequest request)
         {
-            // Get review
-            Review? review = _context.Reviews.Find(id);
+            int UserId = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+
+            Review? review = _context.Reviews.Where(x => x.UserId == UserId).FirstOrDefault(x => x.Id == id);
+
 
             // Check if review exists
             if (review == null)
@@ -88,13 +102,9 @@ namespace EDP_Backend.Controllers.Admin
 
             // Update review
 
-            int userId = request.UserId;
-            int activityId = request.ActivityId;
             int rating = request.Rating;
             string? description = request.Description;
 
-            review.UserId = userId;
-            review.ActivityId = activityId;
             review.Rating = rating;
             review.Description = description ?? "";
 

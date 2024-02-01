@@ -73,6 +73,18 @@ namespace EDP_Backend.Controllers.Admin
             return Ok(review);
         }
 
+        [SwaggerOperation(Summary = "Get all reviews for a specific activity")]
+        [HttpGet("Activity/{id}"), Authorize(Roles = "Admin")]
+        public IActionResult GetReviewForActivity(int id)
+        {
+            var review = _context.Reviews.Where(x => x.ActivityId == id);
+            if (review == null)
+            {
+                return NotFound(Helper.Helper.GenerateError("review not found"));
+            }
+            return Ok(review);
+        }
+
         [SwaggerOperation(Summary = "Update a specific review")]
         [HttpPut("{id}"), Authorize(Roles = "Admin")]
         public IActionResult Editreview(int id, [FromBody] EditReviewRequest request)
@@ -88,13 +100,9 @@ namespace EDP_Backend.Controllers.Admin
 
             // Update review
 
-            int userId = request.UserId;
-            int activityId = request.ActivityId;
             int rating = request.Rating;
             string? description = request.Description;
 
-            review.UserId = userId;
-            review.ActivityId = activityId;
             review.Rating = rating;
             review.Description = description ?? "";
 

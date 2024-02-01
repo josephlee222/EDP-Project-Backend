@@ -5,8 +5,6 @@ namespace EDP_Backend.Models
 {
     public class EditBookingRequest
     {
-        public int UserId { get; set; }
-        public int ActivityId { get; set; }
         [Required]
         public DateTime Date { get; set; }
         public int Pax { get; set; }
