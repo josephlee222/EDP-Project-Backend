@@ -36,15 +36,12 @@ namespace EDP_Backend.Controllers.Admin
             int userId = request.UserId;
             int activityId = request.ActivityId;
             DateTime date = request.Date;
+            int pax = request.Pax;
             string? notes = request.Notes;
 
             // Check if name is already registered
             Booking? existingBooking = _context.Bookings.FirstOrDefault(booking =>
             booking.UserId == userId && booking.ActivityId == activityId && booking.Date == date);
-
-            /*Availability? existingAvailability = _context.Availabilities.FirstOrDefault(availability =>
-            availability.ActivityId == activityId && availability.Date == date);*/
-
             if (existingBooking != null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Booking with this name already exists"));
@@ -56,6 +53,7 @@ namespace EDP_Backend.Controllers.Admin
                 UserId = userId,
                 ActivityId = activityId,
                 Date = date,
+                Pax = pax,
                 Notes = notes,
             };
 
@@ -95,11 +93,13 @@ namespace EDP_Backend.Controllers.Admin
             int userId = request.UserId;
             int activityId = request.ActivityId;
             DateTime date = request.Date;
+            int pax = request.Pax;
             string? notes = request.Notes;
 
             booking.UserId = userId;
             booking.ActivityId = activityId;
             booking.Date = date;
+            booking.Pax = pax;
             booking.Notes = notes;
 
             _context.SaveChanges();

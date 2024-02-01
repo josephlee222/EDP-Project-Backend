@@ -36,6 +36,7 @@ namespace EDP_Backend.Controllers.Admin
             int userId = request.UserId;
             int activityId = request.ActivityId;
             DateTime date = request.Date;
+            int pax = request.Pax;
             string? notes = request.Notes;
 
             // Check if name is already registered
@@ -52,6 +53,7 @@ namespace EDP_Backend.Controllers.Admin
                 UserId = userId,
                 ActivityId = activityId,
                 Date = date,
+                Pax = pax,
                 Notes = notes,
             };
 
@@ -91,11 +93,13 @@ namespace EDP_Backend.Controllers.Admin
             int userId = request.UserId;
             int activityId = request.ActivityId;
             DateTime date = request.Date;
+            int pax = request.Pax;
             string? notes = request.Notes;
 
             booking.UserId = userId;
             booking.ActivityId = activityId;
             booking.Date = date;
+            booking.Pax = pax;
             booking.Notes = notes;
 
             _context.SaveChanges();

@@ -9,6 +9,7 @@ namespace EDP_Backend.Models
         public int ActivityId { get; set; }
         [Required]
         public DateTime Date { get; set; }
+        public int Pax { get; set; }
         public string? Notes { get; set; }
     }
 }
