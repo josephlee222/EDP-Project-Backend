@@ -932,7 +932,14 @@ namespace EDP_Backend.Controllers
 					DisplayName = user.Name
                 };
 
-                var options = _fido2.RequestNewCredential(fido2User, new List<PublicKeyCredentialDescriptor>()).ToJson();
+				var authenticators = new AuthenticatorSelection
+				{
+					RequireResidentKey = true,
+					UserVerification = "preferred".ToEnum<UserVerificationRequirement>(),
+				};
+
+
+				var options = _fido2.RequestNewCredential(fido2User, new List<PublicKeyCredentialDescriptor>(), authenticatorSelection: authenticators, attestationPreference: "none".ToEnum<AttestationConveyancePreference>()).ToJson();
 				return Ok(options);
 			}
 			else
