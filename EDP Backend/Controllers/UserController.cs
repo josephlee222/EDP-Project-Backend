@@ -1034,8 +1034,8 @@ namespace EDP_Backend.Controllers
             try
             {
 				var result = await _fido2.MakeAssertionAsync(request.AttestationResponse, options, storedCredential.PublicKey, storedCredential.SignatureCounter, callback);
-
-                var token = CreateToken(user);
+				user.Notifications = user.Notifications.OrderByDescending(n => n.CreatedAt).Where(notification => !notification.Read).ToList();
+				var token = CreateToken(user);
                 return Ok(new { user, token });
 			}
 			catch (Exception e)
