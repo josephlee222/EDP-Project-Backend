@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 using Fido2NetLib;
 using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Http.Json;
+using Fido2NetLib.Development;
 
 namespace EDP_Backend.Controllers
 {
@@ -946,7 +947,103 @@ namespace EDP_Backend.Controllers
         {
             var optionsJson = request.Options;
 			var options = CredentialCreateOptions.FromJson(optionsJson);
+
+			// 2. Create callback so that lib can verify credential id is unique to this user
+			IsCredentialIdUniqueToUserAsyncDelegate callback = async (args, cancellationToken) =>
+			{
+                var users = await _context.Credentials.Where(Credential => Credential.CredentialId == args.CredentialId).ToListAsync();
+				if (users.Count > 0)
+					return false;
+
+				return true;
+			};
+
+			var fidoCredentials = await _fido2.MakeNewCredentialAsync(request.AttestationResponse, options, callback);
+			var storedCredential = new StoredCredential
+			{
+				Descriptor = new PublicKeyCredentialDescriptor(fidoCredentials.Result.CredentialId),
+				PublicKey = fidoCredentials.Result.PublicKey,
+				UserHandle = fidoCredentials.Result.User.Id,
+				SignatureCounter = fidoCredentials.Result.Counter,
+				CredType = fidoCredentials.Result.CredType,
+				RegDate = DateTime.Now,
+				AaGuid = fidoCredentials.Result.Aaguid
+			};
+
+            int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            var newCredential = new Credential
+            {
+				UserId = id,
+				CredentialId = fidoCredentials.Result.CredentialId,
+				PublicKey = JsonConvert.SerializeObject(storedCredential),
+                DeviceName = "Device registered on " + DateTime.Now.ToString("dd/MM/yyyy")
+			};
+
+            _context.Credentials.Add(newCredential);
+            _context.SaveChanges();
+
 			return Ok(new { request.AttestationResponse, options });
+		}
+
+		[SwaggerOperation(Summary = "Get options for login with passwordless authentication")]
+		[HttpGet("Login/Passkey")]
+        public IActionResult GetPasskeyLoginOptions()
+        {
+			var existingCredentials = new List<PublicKeyCredentialDescriptor>();
+			var exts = new AuthenticationExtensionsClientInputs()
+			{
+				Extensions = true,
+				UserVerificationMethod = true
+			};
+
+			// Create options
+			var uv = UserVerificationRequirement.Discouraged;
+
+			var options = _fido2.GetAssertionOptions(
+				existingCredentials,
+				uv,
+				exts
+			);
+
+            return Ok(options);
+		}
+
+        [SwaggerOperation(Summary = "Login with passwordless authentication")]
+        [HttpPost("Login/Passkey")]
+        public async Task<IActionResult> LoginWithPasskey([FromBody] LoginWithPasskeyRequest request)
+        {
+			var optionsJson = request.Options;
+			var options = AssertionOptions.FromJson(optionsJson);
+
+            // Get credential from database
+            var credential = _context.Credentials.FirstOrDefault(credential => credential.CredentialId == request.AttestationResponse.Id);
+            if (credential == null) return BadRequest(Helper.Helper.GenerateError("Credential does not exist"));
+
+            // Get user from database
+            var user = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Id == credential.UserId);
+            if (user == null) return BadRequest(Helper.Helper.GenerateError("User does not exist"));
+
+            // Get stored credential from database
+            var storedCredential = JsonConvert.DeserializeObject<StoredCredential>(credential.PublicKey);
+
+			IsUserHandleOwnerOfCredentialIdAsync callback = static async (args, cancellationToken) =>
+			{
+				return true;
+			};
+
+            try
+            {
+				var result = await _fido2.MakeAssertionAsync(request.AttestationResponse, options, storedCredential.PublicKey, storedCredential.SignatureCounter, callback);
+
+                var token = CreateToken(user);
+                return Ok(new { user, token });
+			}
+			catch (Exception e)
+            {
+				return BadRequest(Helper.Helper.GenerateError(e.Message));
+			}
+
+            
 		}
 
 		private string CreateToken(User user)
