@@ -65,7 +65,7 @@ namespace EDP_Backend
             
             Notifications.Add(notification);
             SaveChanges();
-
+            ChangeTracker.Clear();
             notification.User = null;
             await _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("notification", notification);
 

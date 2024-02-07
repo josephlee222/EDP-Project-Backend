@@ -918,13 +918,20 @@ namespace EDP_Backend.Controllers
 
         [SwaggerOperation(Summary = "Make FIDO2 credential options for passwordless sign-in")]
         [HttpPost("Passkey/Setup"), Authorize]
-        public async Task<IActionResult> MakeCredentialOptions()
+        public async Task<IActionResult> MakeCredentialOptions([FromBody] MakeCredentialsOptionsRequest request)
         {
 			int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
 			User? user = _context.Users.FirstOrDefault(user => user.Id == id);
 
 			if (user != null)
             {
+                // Check user password
+                var isPasswordCorrect = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
+
+                if (!isPasswordCorrect)
+                {
+					return BadRequest(Helper.Helper.GenerateError("Password is incorrect"));
+				}
 				Fido2User fido2User = new()
                 {
 					Id = Encoding.UTF8.GetBytes(user.Id.ToString()),
