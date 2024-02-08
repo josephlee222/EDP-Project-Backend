@@ -17,6 +17,20 @@ namespace EDP_Backend
             _configuration = configuration;
             _hubContext = hubContext;
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Activity>()
+                        .OwnsOne(e => e.Pictures, sa =>
+                        {
+                            sa.Property(p => p.Items)
+                              .HasColumnName("StringArray")
+                              .HasConversion(
+                                  v => string.Join(',', v),
+                                  v => v.Split(',', StringSplitOptions.RemoveEmptyEntries));
+                        });
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder
         optionsBuilder)
         {
