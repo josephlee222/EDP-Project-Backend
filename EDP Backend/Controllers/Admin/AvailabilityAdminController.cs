@@ -75,6 +75,24 @@ namespace EDP_Backend.Controllers.Admin
             return Ok(availability);
         }
 
+        [SwaggerOperation(Summary = "Get availabilities for a specific activity")]
+        [HttpGet("Activity/{id}")]
+        public IActionResult GetActivityAvailabilities(int id)
+        {
+
+            var availability = _context.Availabilities.Find(id);
+            var activityAvailabilities = _context.Availabilities
+                                           .Where(a => a.ActivityId == id)
+                                           .ToList(); // Filter and convert to list
+
+            if (activityAvailabilities == null)
+            {
+                return NotFound(Helper.Helper.GenerateError("availability not found for activity with id "+id.ToString()));
+            }
+            return Ok(activityAvailabilities);
+        }
+
+
         [SwaggerOperation(Summary = "Update a specific availability")]
         [HttpPut("{id}")]
         public IActionResult Editavailability(int id, [FromBody] EditAvailabilityRequest request)
