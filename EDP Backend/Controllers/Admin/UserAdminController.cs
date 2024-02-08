@@ -1,6 +1,7 @@
 ﻿using EDP_Backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace EDP_Backend.Controllers
@@ -123,5 +124,17 @@ namespace EDP_Backend.Controllers
             _context.SaveChanges();
             return Ok();
         }
-    }
+
+		[SwaggerOperation(Summary = "Broadcast notification to all users")]
+		[HttpPost("Broadcast"), Authorize(Roles = "Admin")]
+        public async Task<IActionResult> BroadcastNotification([FromBody] BroadcastNotificationRequest request)
+        {
+			List<User> users = _context.Users.Where(user => !user.IsDeleted).ToList();
+			foreach (User user in users)
+            {
+				_context.SendNotification(user.Id, request.Title, request.Subtitle, "Automatic", request.Action, request.ActionUrl);
+			}
+			return Ok();
+		}
+	}
 }
