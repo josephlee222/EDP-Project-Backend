@@ -11,6 +11,8 @@ namespace EDP_Backend.Models
         public int ActivityId { get; set; }
         public int Rating { get; set; }
         public string Description { get; set; } = string.Empty;
+        public StringArray? Pictures { get; set; }
+
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 

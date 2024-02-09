@@ -3,6 +3,7 @@ using EDP_Backend.Models.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Diagnostics;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 
@@ -37,6 +38,15 @@ namespace EDP_Backend.Controllers.Admin
             int activityId = request.ActivityId;
             int rating = request.Rating;
             string? description = request.Description;
+            string[]? pictures = request.Pictures;
+
+            StringArray? arrayPictures = null;
+
+            if (pictures != null)
+            {
+                arrayPictures = new StringArray { Items = pictures };
+            }
+
 
             // Check if name is already registered
             Review? existingReview = _context.Reviews.FirstOrDefault(review => 
@@ -53,6 +63,7 @@ namespace EDP_Backend.Controllers.Admin
                 ActivityId = activityId,
                 Rating = rating,
                 Description = description ?? "",
+                Pictures = arrayPictures,
             };
 
             _context.Reviews.Add(review);
@@ -102,9 +113,19 @@ namespace EDP_Backend.Controllers.Admin
 
             int rating = request.Rating;
             string? description = request.Description;
+            string[]? pictures = request.Pictures;
+
+            StringArray? arrayPictures = null;
+
+            if (pictures != null)
+            {
+                arrayPictures = new StringArray { Items = pictures };
+            }
+
 
             review.Rating = rating;
             review.Description = description ?? "";
+            review.Pictures = arrayPictures ?? review.Pictures;
 
 
             _context.SaveChanges();

@@ -46,7 +46,13 @@ namespace EDP_Backend.Controllers.Admin
             float? discountAmount = request.DiscountAmount;
             bool? discounted = request.Discounted;
             string[]? pictures = request.Pictures;
-            StringArray arrayPictures = new StringArray { Items = pictures};
+
+            StringArray? arrayPictures = null;
+
+            if (pictures != null)
+            {
+                arrayPictures = new StringArray { Items = pictures };
+            }
 
 
             // Check if name is already registered
@@ -122,7 +128,13 @@ namespace EDP_Backend.Controllers.Admin
             bool? discounted = request.Discounted;
             string[]? pictures = request.Pictures;
 
-            StringArray arrayPictures = new StringArray { Items = pictures };
+            StringArray? arrayPictures = null;
+
+            if (pictures != null)
+            {
+                arrayPictures = new StringArray { Items = pictures };
+            }
+
 
             //activity.Code = code ?? activity.Code;
 

@@ -8,5 +8,6 @@ namespace EDP_Backend.Models
         [Required]
         public int Rating { get; set; }
         public string? Description { get; set; } = string.Empty;
+        public string[]? Pictures { get; set; }
     }
 }

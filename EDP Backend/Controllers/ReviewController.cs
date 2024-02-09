@@ -40,6 +40,15 @@ namespace EDP_Backend.Controllers.Admin
             int rating = request.Rating;
             string? description = request.Description;
 
+            string[]? pictures = request.Pictures;
+
+            StringArray? arrayPictures = null;
+
+            if (pictures != null)
+            {
+                arrayPictures = new StringArray { Items = pictures };
+            }
+
             // Check if name is already registered
             Review? existingReview = _context.Reviews.FirstOrDefault(review => 
             review.UserId == userId && review.ActivityId == activityId && review.CreatedAt == DateTime.Now);
@@ -55,6 +64,7 @@ namespace EDP_Backend.Controllers.Admin
                 ActivityId = activityId,
                 Rating = rating,
                 Description = description ?? "",
+                Pictures = arrayPictures,
             };
 
             _context.Reviews.Add(review);
@@ -102,12 +112,21 @@ namespace EDP_Backend.Controllers.Admin
             }
 
             // Update review
-
             int rating = request.Rating;
             string? description = request.Description;
+            string[]? pictures = request.Pictures;
+
+            StringArray? arrayPictures = null;
+
+            if (pictures != null)
+            {
+                arrayPictures = new StringArray { Items = pictures };
+            }
+
 
             review.Rating = rating;
             review.Description = description ?? "";
+            review.Pictures = arrayPictures ?? review.Pictures;
 
 
             _context.SaveChanges();

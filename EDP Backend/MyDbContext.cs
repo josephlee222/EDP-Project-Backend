@@ -29,6 +29,15 @@ namespace EDP_Backend
                                   v => string.Join(',', v),
                                   v => v.Split(',', StringSplitOptions.RemoveEmptyEntries));
                         });
+            modelBuilder.Entity<Review>()
+                        .OwnsOne(e => e.Pictures, sa =>
+                        {
+                            sa.Property(p => p.Items)
+                              .HasColumnName("StringArray")
+                              .HasConversion(
+                                  v => string.Join(',', v),
+                                  v => v.Split(',', StringSplitOptions.RemoveEmptyEntries));
+                        });
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder
