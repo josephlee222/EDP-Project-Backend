@@ -27,6 +27,11 @@ namespace EDP_Backend.Controllers
             var filename = id + Path.GetExtension(file.FileName);
             var imagePath = Path.Combine(_environment.ContentRootPath,
             @"wwwroot/uploads", filename);
+            // create folder in wwwroot
+            if (!Directory.Exists(Path.GetDirectoryName(imagePath)))
+            {
+				Directory.CreateDirectory(Path.GetDirectoryName(imagePath));
+			}
             using var fileStream = new FileStream(imagePath, FileMode.Create);
             file.CopyTo(fileStream);
             return Ok(new { filename });
