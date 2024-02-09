@@ -4,6 +4,7 @@ using EDP_Backend;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EDP_Backend.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240209045210_bookings_availability")]
+    partial class bookings_availability
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -102,8 +105,6 @@ namespace EDP_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ActivityId");
-
                     b.ToTable("Availabilities");
                 });
 
@@ -181,10 +182,6 @@ namespace EDP_Backend.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AvailabilityId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Carts");
                 });
@@ -475,7 +472,7 @@ namespace EDP_Backend.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(4,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -521,7 +518,7 @@ namespace EDP_Backend.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<decimal>("Balance")
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(6,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime");
@@ -615,17 +612,6 @@ namespace EDP_Backend.Migrations
                     b.Navigation("Pictures");
                 });
 
-            modelBuilder.Entity("EDP_Backend.Models.Availability", b =>
-                {
-                    b.HasOne("EDP_Backend.Models.Activity", "Activity")
-                        .WithMany()
-                        .HasForeignKey("ActivityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Activity");
-                });
-
             modelBuilder.Entity("EDP_Backend.Models.Booking", b =>
                 {
                     b.HasOne("EDP_Backend.Models.Availability", "Availability")
@@ -635,25 +621,6 @@ namespace EDP_Backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Availability");
-                });
-
-            modelBuilder.Entity("EDP_Backend.Models.Cart", b =>
-                {
-                    b.HasOne("EDP_Backend.Models.Availability", "Availability")
-                        .WithMany()
-                        .HasForeignKey("AvailabilityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("EDP_Backend.Models.User", "User")
-                        .WithMany("Cart")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Availability");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("EDP_Backend.Models.Notification", b =>
@@ -696,8 +663,6 @@ namespace EDP_Backend.Migrations
 
             modelBuilder.Entity("EDP_Backend.Models.User", b =>
                 {
-                    b.Navigation("Cart");
-
                     b.Navigation("Notifications");
 
                     b.Navigation("Transactions");

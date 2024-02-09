@@ -2,6 +2,7 @@
 using EDP_Backend.Models.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
@@ -40,17 +41,25 @@ namespace EDP_Backend.Controllers.Admin
             int currentpax = request.CurrentPax;
 
             // Check if name is already registered
-            Availability? existingAvailability = _context.Availabilities.FirstOrDefault(availability => 
-            availability.ActivityId == activityId && availability.Date == date);
+            Availability? existingAvailability = _context.Availabilities.Include(a => a.Activity).FirstOrDefault(availability => 
+            availability.Activity.Id == activityId && availability.Date == date);
             if (existingAvailability != null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Availability with this name already exists"));
             }
 
+            // get activity
+            Activity? activity = _context.Activities.Find(activityId);
+
+            if (activity == null)
+            {
+				return NotFound(Helper.Helper.GenerateError("activity not found"));
+			}
+
             // Create availability
             Availability availability = new Availability
             {
-                ActivityId = activityId,
+                Activity = activity,
                 Date = date,
                 Price = price,
                 MaxPax = maxpax,
@@ -81,8 +90,8 @@ namespace EDP_Backend.Controllers.Admin
         {
 
             var availability = _context.Availabilities.Find(id);
-            var activityAvailabilities = _context.Availabilities
-                                           .Where(a => a.ActivityId == id)
+            var activityAvailabilities = _context.Availabilities.Include(a => a.Activity) // Include activity
+                                           .Where(a => a.Activity.Id == id)
                                            .ToList(); // Filter and convert to list
 
             if (activityAvailabilities == null)
@@ -116,7 +125,14 @@ namespace EDP_Backend.Controllers.Admin
 
             //availability.Code = code ?? availability.Code;
 
-            availability.ActivityId = activityId;
+            // get activity
+            Activity? activity = _context.Activities.Find(activityId);
+            if (activity == null)
+            {
+                return NotFound(Helper.Helper.GenerateError("activity not found"));
+            }
+
+            availability.Activity = activity;
             availability.Date = date;
             availability.MaxPax = maxpax ?? availability.MaxPax;
             availability.CurrentPax = currentpax ?? availability.CurrentPax;

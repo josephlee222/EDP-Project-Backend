@@ -171,7 +171,7 @@ namespace EDP_Backend.Controllers
             request.Password = request.Password.Trim();
 
             // Check if email is already registered
-            User? existingUser = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Email == request.Email);
+            User? existingUser = _context.Users.Include(user => user.Notifications).Include(user => user.Cart).AsNoTracking().FirstOrDefault(user => user.Email == request.Email);
             if (existingUser == null || existingUser.IsDeleted)
             {
                 return BadRequest(Helper.Helper.GenerateError("Wrong login details provided. Please try again."));
@@ -213,11 +213,11 @@ namespace EDP_Backend.Controllers
             
 
             // Check if sub is already registered
-            User? existingUser = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.GoogleId == googleProfile.Sub);
+            User? existingUser = _context.Users.Include(user => user.Notifications).Include(user => user.Cart).AsNoTracking().FirstOrDefault(user => user.GoogleId == googleProfile.Sub);
             if (existingUser == null)
             {
                 // Check if email is already registered
-                existingUser = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Email == googleProfile.Email);
+                existingUser = _context.Users.Include(user => user.Notifications).Include(user => user.Cart).AsNoTracking().FirstOrDefault(user => user.Email == googleProfile.Email);
 
                 if (existingUser != null)
                 {
@@ -276,11 +276,11 @@ namespace EDP_Backend.Controllers
 
 
             // Check if sub is already registered
-            User? existingUser = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.FacebookId == facebookProfile.Id);
+            User? existingUser = _context.Users.Include(user => user.Notifications).Include(user => user.Cart).AsNoTracking().FirstOrDefault(user => user.FacebookId == facebookProfile.Id);
             if (existingUser == null)
             {
                 // Check if email is already registered
-                existingUser = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Email == facebookProfile.Email);
+                existingUser = _context.Users.Include(user => user.Notifications).Include(user => user.Cart).AsNoTracking().FirstOrDefault(user => user.Email == facebookProfile.Email);
 
                 if (existingUser != null)
                 {
@@ -596,7 +596,7 @@ namespace EDP_Backend.Controllers
         public IActionResult Refresh()
         {
             int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
-            User? user = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Id == id);
+            User? user = _context.Users.Include(user => user.Notifications).Include(user => user.Cart).AsNoTracking().FirstOrDefault(user => user.Id == id);
 
             if (user == null)
             {
@@ -673,7 +673,7 @@ namespace EDP_Backend.Controllers
         public IActionResult GetUserInfo()
         {
             int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
-            User? user = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Id == id);
+            User? user = _context.Users.Include(user => user.Notifications).Include(user => user.Cart).AsNoTracking().FirstOrDefault(user => user.Id == id);
 
             if (user != null)
             {
@@ -826,8 +826,10 @@ namespace EDP_Backend.Controllers
                 }
             } catch (Exception e)
             {
-                return BadRequest(Helper.Helper.GenerateError(e.Message));
-            }
+				
+				return BadRequest(Helper.Helper.GenerateError(e.Message));
+				throw;
+			}
         }
 
         [SwaggerOperation(Summary = "Get current user transaction records")]
@@ -1034,7 +1036,7 @@ namespace EDP_Backend.Controllers
             if (credential == null) return BadRequest(Helper.Helper.GenerateError("Credential does not exist"));
 
             // Get user from database
-            var user = _context.Users.Include(user => user.Notifications).AsNoTracking().FirstOrDefault(user => user.Id == credential.UserId);
+            var user = _context.Users.Include(user => user.Notifications).Include(user => user.Cart).AsNoTracking().FirstOrDefault(user => user.Id == credential.UserId);
             if (user == null) return BadRequest(Helper.Helper.GenerateError("User does not exist"));
 
             // Get stored credential from database

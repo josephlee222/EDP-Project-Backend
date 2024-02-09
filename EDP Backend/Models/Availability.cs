@@ -8,15 +8,16 @@ namespace EDP_Backend.Models
 
         [MaxLength(128)]
         public int Id { get; set; }
-        public int ActivityId { get; set; }
+        public Activity Activity { get; set; }
         [Column(TypeName = "datetime")]
         public DateTime Date {  get; set; }
         public float Price { get; set; }
 
         //maximum no. of people
         public int MaxPax { get; set; }
+        public int CurrentPax { get; set; }
 
-        //current no. of people
-        public int CurrentPax { get; set;}
+        // Collection of bookings made for this availability
+        public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     }
 }

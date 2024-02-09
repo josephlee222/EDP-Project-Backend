@@ -2,6 +2,7 @@
 using EDP_Backend.Models.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
@@ -46,8 +47,8 @@ namespace EDP_Backend.Controllers
         {
 
             var availability = _context.Availabilities.Find(id);
-            var activityAvailabilities = _context.Availabilities
-                                           .Where(a => a.ActivityId == id)
+            var activityAvailabilities = _context.Availabilities.Include(a => a.Activity)
+                                           .Where(a => a.Activity.Id == id)
                                            .ToList(); // Filter and convert to list
 
             if (activityAvailabilities == null)

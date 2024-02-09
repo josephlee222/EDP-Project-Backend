@@ -7,7 +7,7 @@ namespace EDP_Backend.Models
     {
         public int Id { get; set; }
         public User User { get; set; }
-        [Column(TypeName = "decimal(4,2)")]
+        [Column(TypeName = "decimal(10,2)")]
         public decimal Amount { get; set; }
         public string Type { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
