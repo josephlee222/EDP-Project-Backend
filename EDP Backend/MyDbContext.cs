@@ -55,6 +55,7 @@ namespace EDP_Backend
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Credential> Credentials { get; set; }
+        public DbSet<Banner> Banners { get; set; }
 
         public async void SendNotification(int userId, string title, string subtitle, string type, string action, string actionUrl)
         {
