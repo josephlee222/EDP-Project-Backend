@@ -45,6 +45,8 @@ namespace EDP_Backend.Controllers.Admin
             string? discounttype = request.DiscountType?.Trim();
             float? discountAmount = request.DiscountAmount;
             bool? discounted = request.Discounted;
+            string[]? pictures = request.Pictures;
+            StringArray arrayPictures = new StringArray { Items = pictures};
 
 
             // Check if name is already registered
@@ -53,6 +55,8 @@ namespace EDP_Backend.Controllers.Admin
             {
                 return BadRequest(Helper.Helper.GenerateError("Activity with this name already exists"));
             }
+
+
 
             // Create activity
             Activity activity = new Activity
@@ -70,7 +74,7 @@ namespace EDP_Backend.Controllers.Admin
                 Discounted = discounted,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-
+                Pictures = arrayPictures,
 
             };
 
@@ -99,7 +103,6 @@ namespace EDP_Backend.Controllers.Admin
             // Get activity
             Activity? activity = _context.Activities.Find(id);
 
-            // Check if activity exists
             if (activity == null)
             {
                 return NotFound(Helper.Helper.GenerateError("activity not found"));
@@ -117,6 +120,9 @@ namespace EDP_Backend.Controllers.Admin
             string? location = request.Location?.Trim();
             float? discountAmount = request.DiscountAmount;
             bool? discounted = request.Discounted;
+            string[]? pictures = request.Pictures;
+
+            StringArray arrayPictures = new StringArray { Items = pictures };
 
             //activity.Code = code ?? activity.Code;
 
@@ -131,6 +137,7 @@ namespace EDP_Backend.Controllers.Admin
             activity.Location = location ?? activity.Location;
             activity.DiscountAmount = discountAmount ?? activity.DiscountAmount;
             activity.Discounted = discounted ?? activity.Discounted;
+            activity.Pictures = arrayPictures ?? activity.Pictures;
 
             _context.SaveChanges();
             return Ok(activity);

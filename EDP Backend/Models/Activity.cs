@@ -5,7 +5,6 @@ namespace EDP_Backend.Models
 {
     public class Activity
     {
-        [MaxLength(128)]
         public int Id { get; set; }
         [MaxLength(1024)]
         public string Name { get; set; } = string.Empty;
@@ -21,10 +20,15 @@ namespace EDP_Backend.Models
         [Column(TypeName = "decimal(6,2)")]
         public float? DiscountAmount { get; set; } = 0;
         public bool? Discounted { get; set; } = false;
-        //public array Pictures { get; set; }
+        public StringArray? Pictures { get; set; }
+
         [Column(TypeName = "datetime")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         [Column(TypeName = "datetime")]
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
     }
 }
+/*var entity = new YourEntity
+{
+    StringArray = new StringArray { Items = new[] { "item1", "item2", "item3" } }
+};*/
