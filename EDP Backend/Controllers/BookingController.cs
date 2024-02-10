@@ -28,7 +28,7 @@ namespace EDP_Backend.Controllers.Admin
         public IActionResult GetBookings()
         {
             int userId = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
-            var booking = _context.Bookings.Where(x => x.UserId == userId);
+            var booking = _context.Bookings.Include(x => x.Availability).ThenInclude(a => a.Activity).Where(x => x.UserId == userId);
             return Ok(booking);
         }
 
@@ -87,7 +87,7 @@ namespace EDP_Backend.Controllers.Admin
         {
             int userId = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
 
-            Booking? booking = _context.Bookings.Where(x => x.UserId == userId).FirstOrDefault(x => x.Id == id);
+            Booking? booking = _context.Bookings.Include(x => x.Availability).ThenInclude(a => a.Activity).Where(x => x.UserId == userId).FirstOrDefault(x => x.Id == id);
             if (booking == null)
             {
                 return NotFound(Helper.Helper.GenerateError("booking not found"));
