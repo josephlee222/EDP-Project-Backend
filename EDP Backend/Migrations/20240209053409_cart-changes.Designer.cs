@@ -4,6 +4,7 @@ using EDP_Backend;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EDP_Backend.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240209053409_cart-changes")]
+    partial class cartchanges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -475,7 +478,7 @@ namespace EDP_Backend.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(4,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -521,7 +524,7 @@ namespace EDP_Backend.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<decimal>("Balance")
-                        .HasColumnType("decimal(10,2)");
+                        .HasColumnType("decimal(6,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime");
@@ -646,7 +649,7 @@ namespace EDP_Backend.Migrations
                         .IsRequired();
 
                     b.HasOne("EDP_Backend.Models.User", "User")
-                        .WithMany("Cart")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -665,29 +668,6 @@ namespace EDP_Backend.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("EDP_Backend.Models.Review", b =>
-                {
-                    b.OwnsOne("EDP_Backend.Models.StringArray", "Pictures", b1 =>
-                        {
-                            b1.Property<int>("ReviewId")
-                                .HasColumnType("int");
-
-                            b1.Property<string>("Items")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)")
-                                .HasColumnName("StringArray");
-
-                            b1.HasKey("ReviewId");
-
-                            b1.ToTable("Reviews");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ReviewId");
-                        });
-
-                    b.Navigation("Pictures");
                 });
 
             modelBuilder.Entity("EDP_Backend.Models.Token", b =>
@@ -719,8 +699,6 @@ namespace EDP_Backend.Migrations
 
             modelBuilder.Entity("EDP_Backend.Models.User", b =>
                 {
-                    b.Navigation("Cart");
-
                     b.Navigation("Notifications");
 
                     b.Navigation("Transactions");

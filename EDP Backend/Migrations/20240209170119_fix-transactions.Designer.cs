@@ -4,6 +4,7 @@ using EDP_Backend;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EDP_Backend.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240209170119_fix-transactions")]
+    partial class fixtransactions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -665,29 +668,6 @@ namespace EDP_Backend.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("EDP_Backend.Models.Review", b =>
-                {
-                    b.OwnsOne("EDP_Backend.Models.StringArray", "Pictures", b1 =>
-                        {
-                            b1.Property<int>("ReviewId")
-                                .HasColumnType("int");
-
-                            b1.Property<string>("Items")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(max)")
-                                .HasColumnName("StringArray");
-
-                            b1.HasKey("ReviewId");
-
-                            b1.ToTable("Reviews");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ReviewId");
-                        });
-
-                    b.Navigation("Pictures");
                 });
 
             modelBuilder.Entity("EDP_Backend.Models.Token", b =>

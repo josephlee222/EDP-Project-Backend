@@ -20,7 +20,7 @@ namespace EDP_Backend.Models
         public string? PhoneNumber { get; set; } = string.Empty;
         [MaxLength(24)]
         public string? ProfilePictureType { get; set; }
-        [Column(TypeName = "decimal(6,2)")]
+        [Column(TypeName = "decimal(10,2)")]
         public decimal Balance { get; set; } = 0;
         [MaxLength(64)]
         public string? OccupationalStatus { get; set; }
@@ -42,5 +42,6 @@ namespace EDP_Backend.Models
         public DateTime UpdatedAt { get; set; } = DateTime.Now;
         public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+        public ICollection<Cart> Cart { get; set; } = new List<Cart>();
     }
 }
