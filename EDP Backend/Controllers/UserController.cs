@@ -706,6 +706,8 @@ namespace EDP_Backend.Controllers
                 user.ProfilePictureType = request.ProfilePictureType ?? user.ProfilePictureType;
                 user.ProfilePicture = request.ProfilePicture ?? user.ProfilePicture;
                 user.Newsletter = request.Newsletter ?? user.Newsletter;
+                user.Nric = request.Nric ?? user.Nric;
+                user.BirthDate = request.BirthDate ?? user.BirthDate;
 
 
                 // Check if password is correct if request is not null
