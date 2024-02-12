@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Diagnostics;
 using System.Security.Claims;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
@@ -145,6 +146,20 @@ namespace EDP_Backend.Controllers.Admin
                 return NotFound(Helper.Helper.GenerateError("review not found"));
             }
             _context.Reviews.Remove(review);
+
+            // Delete associated files from wwwroot/uploads folder
+            if (review.Pictures != null && review.Pictures.Items != null)
+            {
+                foreach (var filename in review.Pictures.Items)
+                {
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", filename);
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                }
+            }
+
             _context.SaveChanges();
             return Ok(review);
         }
