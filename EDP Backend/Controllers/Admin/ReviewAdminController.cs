@@ -35,6 +35,8 @@ namespace EDP_Backend.Controllers.Admin
         public IActionResult CreateReview([FromBody] CreateReviewRequest request)
         {
             int userId = request.UserId;
+            var user = _context.Users.Find(userId);
+
             int activityId = request.ActivityId;
             int rating = request.Rating;
             string? description = request.Description;
@@ -50,7 +52,7 @@ namespace EDP_Backend.Controllers.Admin
 
             // Check if name is already registered
             Review? existingReview = _context.Reviews.FirstOrDefault(review => 
-            review.UserId == userId && review.ActivityId == activityId && review.CreatedAt == DateTime.Now);
+            review.User.Id == userId && review.ActivityId == activityId && review.CreatedAt == DateTime.Now);
             if (existingReview != null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Review with this name already exists"));
@@ -59,7 +61,7 @@ namespace EDP_Backend.Controllers.Admin
             // Create review
             Review review = new Review
             {
-                UserId = userId,
+                User = user,
                 ActivityId = activityId,
                 Rating = rating,
                 Description = description ?? "",

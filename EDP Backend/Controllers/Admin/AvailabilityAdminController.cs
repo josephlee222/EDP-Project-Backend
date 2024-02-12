@@ -134,6 +134,7 @@ namespace EDP_Backend.Controllers.Admin
 
             availability.Activity = activity;
             availability.Date = date;
+            availability.Price = price ?? availability.Price;
             availability.MaxPax = maxpax ?? availability.MaxPax;
             availability.CurrentPax = currentpax ?? availability.CurrentPax;
 
@@ -154,7 +155,5 @@ namespace EDP_Backend.Controllers.Admin
             _context.SaveChanges();
             return Ok(availability);
         }
-
-
     }
 }

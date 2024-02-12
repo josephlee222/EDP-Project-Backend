@@ -7,7 +7,7 @@ namespace EDP_Backend.Models
     {
         [MaxLength(128)]
         public int Id { get; set; }
-        public int UserId { get; set; }
+        public User User { get; set; }
         public int ActivityId { get; set; }
         public int Rating { get; set; }
         public string Description { get; set; } = string.Empty;

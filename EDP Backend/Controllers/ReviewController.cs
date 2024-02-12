@@ -2,6 +2,7 @@
 using EDP_Backend.Models.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Security.Claims;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
@@ -35,6 +36,7 @@ namespace EDP_Backend.Controllers.Admin
         public IActionResult CreateReview([FromBody] CreateReviewRequest request)
         {
             int userId = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            var user = _context.Users.Find(userId);
 
             int activityId = request.ActivityId;
             int rating = request.Rating;
@@ -51,7 +53,7 @@ namespace EDP_Backend.Controllers.Admin
 
             // Check if name is already registered
             Review? existingReview = _context.Reviews.FirstOrDefault(review => 
-            review.UserId == userId && review.ActivityId == activityId && review.CreatedAt == DateTime.Now);
+            review.User.Id == userId && review.ActivityId == activityId && review.CreatedAt == DateTime.Now);
             if (existingReview != null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Review with this name already exists"));
@@ -60,7 +62,7 @@ namespace EDP_Backend.Controllers.Admin
             // Create review
             Review review = new Review
             {
-                UserId = userId,
+                User = user,
                 ActivityId = activityId,
                 Rating = rating,
                 Description = description ?? "",
@@ -76,7 +78,7 @@ namespace EDP_Backend.Controllers.Admin
         [HttpGet("Activity/{id}")]
         public IActionResult GetReviewForActivity(int id)
         {
-            var review = _context.Reviews.Where(x => x.ActivityId == id);
+            var review = _context.Reviews.Include(x => x.User).Where(Activity => Activity.ActivityId == id);
             if (review == null)
             {
                 return NotFound(Helper.Helper.GenerateError("review not found"));
@@ -102,7 +104,7 @@ namespace EDP_Backend.Controllers.Admin
         {
             int UserId = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
 
-            Review? review = _context.Reviews.Where(x => x.UserId == UserId).FirstOrDefault(x => x.Id == id);
+            Review? review = _context.Reviews.Where(x => x.User.Id == UserId).FirstOrDefault(x => x.Id == id);
 
 
             // Check if review exists

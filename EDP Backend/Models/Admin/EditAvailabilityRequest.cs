@@ -5,7 +5,6 @@ namespace EDP_Backend.Models.Admin
 {
     public class EditAvailabilityRequest
     {
-        [MaxLength(128)]
         public int Id { get; set; }
         public int ActivityId { get; set; }
         [Required]
