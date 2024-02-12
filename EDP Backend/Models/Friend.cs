@@ -6,8 +6,10 @@ namespace EDP_Backend.Models
     public class Friend
     {
         public int Id { get; set; }
-        [Required]
-        public int FriendID { get; set; }
-        public DateTime AddedAt { get; set; } = DateTime.Now;
+		[Required]
+		public int SenderID { get; set; }
+		[Required]
+		public int RecipientID { get; set; }
+		public DateTime AddedAt { get; set; } = DateTime.Now;
     }
 }

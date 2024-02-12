@@ -22,19 +22,22 @@ namespace EDP_Backend.Controllers
             _configuration = configuration;
         }
 
-        [SwaggerOperation(Summary = "Get all current friends")]
-        [HttpGet(), Authorize]
-        public IActionResult GetFriends()
+		//TODO: Add filter for id
+		[SwaggerOperation(Summary = "Get all current friends")]
+        [HttpGet("{SenderID}"), Authorize]
+        public IActionResult GetFriends(int SenderID)
         {
             return Ok(_context.Friends);
         }
 
-
+        //TODO: Complete Get by searching for both sender and recipient iD
         [SwaggerOperation(Summary = "Get a specific friend")]
-        [HttpGet("{id}"), Authorize]
-        public IActionResult GetFriend(int id)
+        [HttpGet(), Authorize]
+        public IActionResult GetFriend([FromBody] Friend request)
         {
-            Friend? Friend = _context.Friends.Find(id);
+			int SenderID = request.SenderID;
+			int RecipientID = request.RecipientID;
+			Friend? Friend = _context.Friends.Find(RecipientID);
             if (Friend == null)
             {
                 return NotFound(Helper.Helper.GenerateError("Friend not found"));
@@ -44,12 +47,13 @@ namespace EDP_Backend.Controllers
 
         [SwaggerOperation(Summary = "Add a new friend :)")]
         [HttpPost(), Authorize]
-        public IActionResult CreateFriend([FromBody] CreateFriend request)
+        public IActionResult CreateFriend([FromBody] Friend request)
         {
-            int FriendID = request.FriendID;
+			int SenderID = request.SenderID;
+			int RecipientID = request.RecipientID;
 
-            // Check if name is already registered
-            Friend? existingFriend = _context.Friends.FirstOrDefault(friend => friend.FriendID == FriendID);
+			// Check if friend is already created
+			Friend? existingFriend = _context.Friends.FirstOrDefault(friend => friend.RecipientID == RecipientID);
             if (existingFriend != null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Friend with this name already exists"));
@@ -58,8 +62,9 @@ namespace EDP_Backend.Controllers
             // Create friend
             Friend friend = new Friend
             {
-                FriendID = FriendID,
-                AddedAt = DateTime.UtcNow
+                SenderID = SenderID,
+				RecipientID = RecipientID,
+				AddedAt = DateTime.UtcNow
             };
 
             _context.Friends.Add(friend);

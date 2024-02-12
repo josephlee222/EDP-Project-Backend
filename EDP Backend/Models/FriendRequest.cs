@@ -10,6 +10,7 @@ namespace EDP_Backend.Models
         public int SenderID {  get; set; }
         [Required]
         public int RecipientID { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
+        public DateTime SentAt { get; set; } = DateTime.Now;
+
+	}
 }

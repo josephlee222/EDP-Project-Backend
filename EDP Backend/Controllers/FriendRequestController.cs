@@ -18,38 +18,40 @@ namespace EDP_Backend.Controllers
             _configuration = configuration;
         }
 
-        [SwaggerOperation(Summary = "Get all current friend requests")]
-        [HttpGet(), Authorize]
-        public IActionResult GetFriendRequests()
+		//TODO: Add filter for id
+		[SwaggerOperation(Summary = "Get all current friend requests")]
+        [HttpGet("{RecipientID}"), Authorize]
+        public IActionResult GetFriendRequests(int RecipientID)
         {
             return Ok(_context.FriendRequests);
         }
 
-
-        [SwaggerOperation(Summary = "Get a specific friend request")]
-        [HttpGet("{id}"), Authorize]
-        public IActionResult GetFriendRequest(int id)
+		//TODO: Complete Get by searching for both sender and recipient iD
+		[SwaggerOperation(Summary = "Get a specific friend request")]
+        [HttpGet("{recipientID}"), Authorize]
+        public IActionResult GetFriendRequest(int recipientID)
         {
-            FriendRequest? FriendRequest = _context.FriendRequests.Find(id);
+            FriendRequest? FriendRequest = _context.FriendRequests.Find(recipientID);
             if (FriendRequest == null)
             {
-                return NotFound(Helper.Helper.GenerateError("FriendRequest not found"));
+                return NotFound(Helper.Helper.GenerateError("Friend Request not found"));
             }
             return Ok(FriendRequest);
         }
 
         [SwaggerOperation(Summary = "Add a new friend request :)")]
         [HttpPost(), Authorize]
-        public IActionResult CreateFriendRequest([FromBody] CreateFriendRequest request)
+        public IActionResult CreateFriendRequest([FromBody] FriendRequest request)
         {
             int SenderID = request.SenderID;
             int RecipientID = request.RecipientID;
 
-            // Check if name is already registered
+            // Check if friend/friend request already exists
+            Friend? existingFriend = _context.Friends.FirstOrDefault(friend => friend.SenderID == SenderID && friend.RecipientID == RecipientID);
             FriendRequest? existingFriendRequest = _context.FriendRequests.FirstOrDefault(friendrequest => friendrequest.SenderID == SenderID && friendrequest.RecipientID == RecipientID);
-            if (existingFriendRequest != null)
+            if (existingFriend != null && existingFriendRequest != null)
             {
-                return BadRequest(Helper.Helper.GenerateError("FriendRequest with this name already exists"));
+                return BadRequest(Helper.Helper.GenerateError("You are already friends"));
             }
 
             // Create friendrequest
@@ -57,7 +59,7 @@ namespace EDP_Backend.Controllers
             {
                 SenderID = SenderID,
                 RecipientID = RecipientID,
-                CreatedAt = DateTime.UtcNow
+                SentAt = DateTime.UtcNow
             };
 
             _context.FriendRequests.Add(friendrequest);
@@ -72,7 +74,7 @@ namespace EDP_Backend.Controllers
             FriendRequest? friendrequest = _context.FriendRequests.Find(id);
             if (friendrequest == null)
             {
-                return NotFound(Helper.Helper.GenerateError("friendrequest not found"));
+                return NotFound(Helper.Helper.GenerateError("Friend Request not found"));
             }
             _context.FriendRequests.Remove(friendrequest);
             _context.SaveChanges();
