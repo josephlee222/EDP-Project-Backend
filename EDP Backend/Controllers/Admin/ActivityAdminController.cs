@@ -2,6 +2,7 @@
 using EDP_Backend.Models.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
@@ -155,6 +156,8 @@ namespace EDP_Backend.Controllers.Admin
             return Ok(activity);
         }
 
+
+
         [SwaggerOperation(Summary = "Delete a specific activity")]
         [HttpDelete("{id}"), Authorize(Roles = "Admin")]
         public IActionResult Deleteactivity(int id)
@@ -162,13 +165,29 @@ namespace EDP_Backend.Controllers.Admin
             Activity? activity = _context.Activities.Find(id);
             if (activity == null)
             {
-                return NotFound(Helper.Helper.GenerateError("activity not found"));
+                return NotFound(Helper.Helper.GenerateError("Activity not found"));
             }
+
+            // Remove the activity from the context
             _context.Activities.Remove(activity);
+
+            // Delete associated files from wwwroot/uploads folder
+            if (activity.Pictures != null && activity.Pictures.Items != null)
+            {
+                foreach (var filename in activity.Pictures.Items)
+                {
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", filename);
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                }
+            }
+
+            // Save changes to the database
             _context.SaveChanges();
+
             return Ok(activity);
         }
-
-
     }
 }
