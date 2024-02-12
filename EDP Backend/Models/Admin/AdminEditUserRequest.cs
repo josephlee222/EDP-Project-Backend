@@ -23,7 +23,7 @@ namespace EDP_Backend.Models
         [MaxLength(24)]
         public string? ProfilePictureType { get; set; }
         public bool? IsAdmin { get; set; } = false;
-		public DateTime? BirthDate { get; set; }
+		public DateTime? BirthDate { get; set; } = null;
 		[MaxLength(5)]
 		public string? Nric { get; set; }
         public bool? Member { get; set; }
