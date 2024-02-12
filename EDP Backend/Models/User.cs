@@ -32,6 +32,10 @@ namespace EDP_Backend.Models
         public string? GoogleId { get; set; }
         [MaxLength(64)]
         public string? FacebookId { get; set; }
+        public DateTime? BirthDate { get; set; }
+        [MaxLength(5)]
+        public string Nric { get; set; } = string.Empty;
+        public Boolean Member { get; set; } = false;
         public Boolean Newsletter { get; set; } = false;
         public Boolean IsAdmin { get; set; } = false;
         public Boolean IsDeleted { get; set; } = false;

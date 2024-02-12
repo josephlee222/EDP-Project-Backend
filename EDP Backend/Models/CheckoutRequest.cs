@@ -22,6 +22,6 @@ namespace EDP_Backend.Models
         public DateTime Birthday { get; set; }
         [Required]
         public string Nric { get; set; }
-        public string? Coupon { get; set; }
+        public int Coupon { get; set; }
     }
 }

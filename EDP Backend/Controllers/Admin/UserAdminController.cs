@@ -99,6 +99,9 @@ namespace EDP_Backend.Controllers
             user.ProfilePictureType = request.ProfilePictureType ?? user.ProfilePictureType;
             user.PostalCode = request.PostalCode ?? user.PostalCode;
             user.Newsletter = request.Newsletter ?? user.Newsletter;
+            user.BirthDate = request.BirthDate ?? user.BirthDate;
+            user.Nric = request.Nric ?? user.Nric;
+            user.Member = request.Member ?? user.Member;
             
             // Encrypt password if not null
             if (request.NewPassword != null)

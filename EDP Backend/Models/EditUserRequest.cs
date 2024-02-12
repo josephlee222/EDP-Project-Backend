@@ -24,5 +24,8 @@ namespace EDP_Backend.Models
         [MaxLength(24)]
         public string? ProfilePictureType { get; set; }
         public string? ProfilePicture { get; set; }
+        public DateTime? BirthDate { get; set; }
+        [MaxLength(5)]
+        public string? Nric { get; set; }
     }
 }

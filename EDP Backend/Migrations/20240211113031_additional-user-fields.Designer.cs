@@ -4,6 +4,7 @@ using EDP_Backend;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EDP_Backend.Migrations
 {
     [DbContext(typeof(MyDbContext))]
-    partial class MyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240211113031_additional-user-fields")]
+    partial class additionaluserfields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -443,8 +446,6 @@ namespace EDP_Backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
-
                     b.ToTable("Reviews");
                 });
 
@@ -701,12 +702,6 @@ namespace EDP_Backend.Migrations
 
             modelBuilder.Entity("EDP_Backend.Models.Review", b =>
                 {
-                    b.HasOne("EDP_Backend.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.OwnsOne("EDP_Backend.Models.StringArray", "Pictures", b1 =>
                         {
                             b1.Property<int>("ReviewId")
@@ -726,8 +721,6 @@ namespace EDP_Backend.Migrations
                         });
 
                     b.Navigation("Pictures");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("EDP_Backend.Models.Token", b =>

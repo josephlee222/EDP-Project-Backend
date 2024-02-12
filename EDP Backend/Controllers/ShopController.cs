@@ -100,6 +100,7 @@ namespace EDP_Backend.Controllers.Admin
 				// Add cart item to database
 				_context.Carts.Add(cartItem);
 				_context.SaveChanges();
+				_hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
 				return Ok(cartItem);
 			}
         }
@@ -113,6 +114,16 @@ namespace EDP_Backend.Controllers.Admin
 
 			// Get all cart items
 			var cart = _context.Carts.Include(c => c.Availability).ThenInclude(c => c.Activity).Where(c => c.User.Id == id).ToList();
+
+            // Check if activity date is in the past
+            foreach (var item in cart)
+            {
+				if (item.Availability.Date < DateTime.Now)
+                {
+					_context.Carts.Remove(item);
+					_context.SaveChanges();
+				}
+			}
 
             // Get total price
             var totalPrice = 0.0;
@@ -176,6 +187,12 @@ namespace EDP_Backend.Controllers.Admin
 				return BadRequest(Helper.Helper.GenerateError("Coupon has expired"));
 			}
 
+            // Check if coupon is deleted
+            if (coupon.IsDeleted)
+            {
+				return BadRequest(Helper.Helper.GenerateError("Coupon not found"));
+			}
+
 			// Return coupon
 			return Ok(coupon);
 		}
@@ -193,8 +210,17 @@ namespace EDP_Backend.Controllers.Admin
             // Get all cart items
             var cart = _context.Carts.Include(c => c.Availability).Where(c => c.User.Id == id).ToList();
 
-            // Get total price
-            var totalPrice = 0.0;
+			// Check if activity date is in the past
+			foreach (var item in cart)
+			{
+				if (item.Availability.Date < DateTime.Now)
+				{
+					return BadRequest(Helper.Helper.GenerateError("Activity date has passed, please review cart again before trying again"));
+				}
+			}
+
+			// Get total price
+			var totalPrice = 0.0;
             var tax = 0.09;
             foreach (var item in cart)
             {
@@ -223,6 +249,12 @@ namespace EDP_Backend.Controllers.Admin
                 {
 					return BadRequest(Helper.Helper.GenerateError("Coupon has expired"));
 				}
+
+                // Check if coupon is deleted
+                if (coupon.IsDeleted)
+                {
+                    return BadRequest(Helper.Helper.GenerateError("Coupon not found"));
+                }
                 // Apply coupon
 				totalPrice -= (double)coupon.DiscountAmount;
 			}
