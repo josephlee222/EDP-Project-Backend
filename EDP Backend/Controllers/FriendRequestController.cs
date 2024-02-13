@@ -47,14 +47,17 @@ namespace EDP_Backend.Controllers
             int SenderID = request.SenderID;
             int RecipientID = request.RecipientID;
 
-            // Check if friend/friend request already exists
-            Friend? existingFriend = _context.Friends.FirstOrDefault(friend => (friend.SenderID == SenderID && friend.RecipientID == RecipientID) || (friend.SenderID == RecipientID && friend.RecipientID == SenderID));
+			// Check if friend/friend request already exists and if user exists
+			User? existingUser = _context.Users.FirstOrDefault(user => user.Id == RecipientID);
+			Friend? existingFriend = _context.Friends.FirstOrDefault(friend => (friend.SenderID == SenderID && friend.RecipientID == RecipientID) || (friend.SenderID == RecipientID && friend.RecipientID == SenderID));
             FriendRequest? existingFriendRequest = _context.FriendRequests.FirstOrDefault(friendrequest => (friendrequest.SenderID == SenderID && friendrequest.RecipientID == RecipientID) || (friendrequest.SenderID == RecipientID && friendrequest.RecipientID == SenderID));
-            if (existingFriend != null)
+			if (existingUser == null)
+			{
+				return BadRequest(Helper.Helper.GenerateError("User does not exist"));
+			}else if (existingFriend != null)
             {
                 return BadRequest(Helper.Helper.GenerateError("You are already friends"));
-            }
-			else if (existingFriendRequest != null)
+            }else if (existingFriendRequest != null)
 			{
 				return BadRequest(Helper.Helper.GenerateError("You have already sent a friend request or received one. Please check your invites"));
 			}else if (SenderID == RecipientID) {
@@ -64,9 +67,11 @@ namespace EDP_Backend.Controllers
 			// Create friendrequest
 			FriendRequest friendrequest = new FriendRequest
             {
-                SenderID = SenderID,
-                RecipientID = RecipientID,
-                SentAt = DateTime.UtcNow
+				SenderID = SenderID,
+				RecipientID = RecipientID,
+				Name = existingUser.Name,
+				ProfilePicture = existingUser.ProfilePicture,
+				SentAt = DateTime.UtcNow
             };
 
             _context.FriendRequests.Add(friendrequest);

@@ -49,19 +49,24 @@ namespace EDP_Backend.Controllers
             //TODO: Find a way to enter in user id for sender id
 			int SenderID = request.SenderID;
 			int RecipientID = request.RecipientID;
-
-			// Check if friend is already created (Might want to check whether friend request is present)
+            // Check if friend is already created
+            User? existingUser = _context.Users.FirstOrDefault(user => user.Id == RecipientID);
 			Friend? existingFriend = _context.Friends.FirstOrDefault(friend => (friend.SenderID == SenderID && friend.RecipientID == RecipientID) || (friend.SenderID == RecipientID && friend.RecipientID == SenderID));
-            if (existingFriend != null)
+			if (existingUser == null)
+			{
+				return BadRequest(Helper.Helper.GenerateError("User does not exist"));
+			}
+			else if (existingFriend != null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Friend with this name already exists"));
             }
-
             // Create friend
             Friend friend = new Friend
             {
                 SenderID = SenderID,
 				RecipientID = RecipientID,
+                Name = existingUser.Name,
+				ProfilePicture = existingUser.ProfilePicture,
 				AddedAt = DateTime.UtcNow
             };
 

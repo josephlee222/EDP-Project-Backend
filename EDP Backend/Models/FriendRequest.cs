@@ -10,7 +10,11 @@ namespace EDP_Backend.Models
         public int SenderID {  get; set; }
         [Required]
         public int RecipientID { get; set; }
-        public DateTime SentAt { get; set; } = DateTime.Now;
+		[Required]
+		public string Name { get; set; } = string.Empty;
+		[Required]
+		public string? ProfilePicture { get; set; }
+		public DateTime SentAt { get; set; } = DateTime.Now;
 
 	}
 }
