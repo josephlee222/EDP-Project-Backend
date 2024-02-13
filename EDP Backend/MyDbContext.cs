@@ -67,8 +67,9 @@ namespace EDP_Backend
         public DbSet<Banner> Banners { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<GroupMessage> GroupMessages { get; set; }
+		public DbSet<Gift> Gifts { get; set; }
 
-        public async void SendNotification(int userId, string title, string subtitle, string type, string action, string actionUrl)
+		public async void SendNotification(int userId, string title, string subtitle, string type, string action, string actionUrl)
         {
             // get user
             var user = Users.FirstOrDefault(u => u.Id == userId);
