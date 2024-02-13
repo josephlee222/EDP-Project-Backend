@@ -47,7 +47,7 @@ namespace EDP_Backend.Controllers
         {
 
             var availability = _context.Availabilities.Find(id);
-            var activityAvailabilities = _context.Availabilities.Include(a => a.Activity)
+            var activityAvailabilities = _context.Availabilities.Include(a => a.Activity).Include(a => a.Bookings)
                                            .Where(a => a.Activity.Id == id)
                                            .ToList(); // Filter and convert to list
 
