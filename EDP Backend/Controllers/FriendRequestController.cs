@@ -19,15 +19,13 @@ namespace EDP_Backend.Controllers
             _configuration = configuration;
         }
 
-		//TODO: Add filter for id
 		[SwaggerOperation(Summary = "Get all current friend requests")]
         [HttpGet("{RecipientID}"), Authorize]
-        public IActionResult GetFriendRequests(int RecipientID)
+        public IActionResult GetFriendRequests(int RecipientID) 
 		{
             return Ok(_context.FriendRequests.Where(friendrequest => friendrequest.RecipientID == RecipientID).ToList());
         }
 
-		//TODO: Complete Get by searching for both sender and recipient iD
 		[SwaggerOperation(Summary = "Get a specific friend request")]
         [HttpGet("{SenderID},{RecipientID}"), Authorize]
         public IActionResult GetFriendRequest(int SenderID, int RecipientID)
@@ -80,11 +78,9 @@ namespace EDP_Backend.Controllers
         }
 
         [SwaggerOperation(Summary = "Delete a specific friend request")]
-        [HttpDelete(), Authorize]
-        public IActionResult Deletefriendrequest([FromBody] Friend request)
+        [HttpDelete("{SenderID},{RecipientID}"), Authorize]
+        public IActionResult Deletefriendrequest(int SenderID, int RecipientID)
         {
-			int SenderID = request.SenderID;
-			int RecipientID = request.RecipientID;
 			FriendRequest? friendrequest = _context.FriendRequests.FirstOrDefault(friend => (friend.SenderID == SenderID && friend.RecipientID == RecipientID) || (friend.SenderID == RecipientID && friend.RecipientID == SenderID));
 			if (friendrequest == null)
             {

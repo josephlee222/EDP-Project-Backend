@@ -76,11 +76,9 @@ namespace EDP_Backend.Controllers
         }
 
         [SwaggerOperation(Summary = "Delete a specific friend")]
-        [HttpDelete(), Authorize]
-        public IActionResult Deletefriend([FromBody] Friend request)
-        {
-			int SenderID = request.SenderID;
-			int RecipientID = request.RecipientID;
+        [HttpDelete("{SenderID},{RecipientID}"), Authorize]
+        public IActionResult Deletefriend(int SenderID, int RecipientID)
+		{
 			Friend? friend = _context.Friends.FirstOrDefault(friend => (friend.SenderID == SenderID && friend.RecipientID == RecipientID) || (friend.SenderID == RecipientID && friend.RecipientID == SenderID));
 			if (friend == null)
             {
