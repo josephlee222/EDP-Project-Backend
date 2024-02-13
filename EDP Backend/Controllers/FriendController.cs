@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using System.Linq;
 
 
 
@@ -22,22 +23,18 @@ namespace EDP_Backend.Controllers
             _configuration = configuration;
         }
 
-		//TODO: Add filter for id
 		[SwaggerOperation(Summary = "Get all current friends")]
         [HttpGet("{SenderID}"), Authorize]
         public IActionResult GetFriends(int SenderID)
         {
-            return Ok(_context.Friends);
+            return Ok(_context.Friends.Where(friend => friend.SenderID == SenderID || friend.RecipientID == SenderID).ToList());
         }
-
-        //TODO: Complete Get by searching for both sender and recipient iD
+        
         [SwaggerOperation(Summary = "Get a specific friend")]
-        [HttpGet(), Authorize]
-        public IActionResult GetFriend([FromBody] Friend request)
+        [HttpGet("{SenderID},{RecipientID}"), Authorize]
+        public IActionResult GetFriend(int SenderID, int RecipientID)
         {
-			int SenderID = request.SenderID;
-			int RecipientID = request.RecipientID;
-			Friend? Friend = _context.Friends.Find(RecipientID);
+			Friend? Friend = _context.Friends.FirstOrDefault(friend => (friend.SenderID == SenderID && friend.RecipientID == RecipientID) || (friend.SenderID == RecipientID && friend.RecipientID == SenderID));
             if (Friend == null)
             {
                 return NotFound(Helper.Helper.GenerateError("Friend not found"));
@@ -49,11 +46,12 @@ namespace EDP_Backend.Controllers
         [HttpPost(), Authorize]
         public IActionResult CreateFriend([FromBody] Friend request)
         {
+            //TODO: Find a way to enter in user id for sender id
 			int SenderID = request.SenderID;
 			int RecipientID = request.RecipientID;
 
-			// Check if friend is already created
-			Friend? existingFriend = _context.Friends.FirstOrDefault(friend => friend.RecipientID == RecipientID);
+			// Check if friend is already created (Might want to check whether friend request is present)
+			Friend? existingFriend = _context.Friends.FirstOrDefault(friend => (friend.SenderID == SenderID && friend.RecipientID == RecipientID) || (friend.SenderID == RecipientID && friend.RecipientID == SenderID));
             if (existingFriend != null)
             {
                 return BadRequest(Helper.Helper.GenerateError("Friend with this name already exists"));
@@ -73,13 +71,15 @@ namespace EDP_Backend.Controllers
         }
 
         [SwaggerOperation(Summary = "Delete a specific friend")]
-        [HttpDelete("{id}"), Authorize]
-        public IActionResult Deletefriend(int id)
+        [HttpDelete(), Authorize]
+        public IActionResult Deletefriend([FromBody] Friend request)
         {
-            Friend? friend = _context.Friends.Find(id);
-            if (friend == null)
+			int SenderID = request.SenderID;
+			int RecipientID = request.RecipientID;
+			Friend? friend = _context.Friends.FirstOrDefault(friend => (friend.SenderID == SenderID && friend.RecipientID == RecipientID) || (friend.SenderID == RecipientID && friend.RecipientID == SenderID));
+			if (friend == null)
             {
-                return NotFound(Helper.Helper.GenerateError("friend not found"));
+                return NotFound(Helper.Helper.GenerateError("Friend not found"));
             }
             _context.Friends.Remove(friend);
             _context.SaveChanges();
