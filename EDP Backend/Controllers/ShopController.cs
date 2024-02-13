@@ -67,6 +67,11 @@ namespace EDP_Backend.Controllers.Admin
 				return NotFound(Helper.Helper.GenerateError("Availablity not found"));
 			}
 
+			if (DateTime.Now > availability.Date)
+			{
+				return BadRequest(Helper.Helper.GenerateError("The available timeslot has already passed"));
+			}
+
             // Check if the availability is full
             var bookedPax = availability.Bookings.Sum(b => b.Pax);
             if (bookedPax + request.Pax > availability.MaxPax)
