@@ -57,6 +57,8 @@ namespace EDP_Backend.Controllers
 			else if (existingFriendRequest != null)
 			{
 				return BadRequest(Helper.Helper.GenerateError("You have already sent a friend request or received one. Please check your invites"));
+			}else if (SenderID == RecipientID) {
+				return BadRequest(Helper.Helper.GenerateError("You cannot add yourself as a friend. :("));
 			}
 
 			// Create friendrequest
