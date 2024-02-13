@@ -33,13 +33,13 @@ namespace EDP_Backend.Controllers.Admin
         public IActionResult GetBanners()
         {
             // Get banner 1
-            var banner1 = _context.Banners.Where(b => b.Active).FirstOrDefault(b => b.Slot == 1);
+            var banner1 = _context.Banners.Where(b => b.Active).OrderByDescending(b => b.Id).FirstOrDefault(b => b.Slot == 1);
             // Get banner 2
-            var banner2 = _context.Banners.Where(b => b.Active).FirstOrDefault(b => b.Slot == 2);
+            var banner2 = _context.Banners.Where(b => b.Active).OrderByDescending(b => b.Id).FirstOrDefault(b => b.Slot == 2);
             // Get banner 3
-            var banner3 = _context.Banners.Where(b => b.Active).FirstOrDefault(b => b.Slot == 3);
+            var banner3 = _context.Banners.Where(b => b.Active).OrderByDescending(b => b.Id).FirstOrDefault(b => b.Slot == 3);
             // Get banner 4
-            var banner4 = _context.Banners.Where(b => b.Active).FirstOrDefault(b => b.Slot == 4);
+            var banner4 = _context.Banners.Where(b => b.Active).OrderByDescending(b => b.Id).FirstOrDefault(b => b.Slot == 4);
 
             // Return all banners
             return Ok(new
@@ -56,6 +56,8 @@ namespace EDP_Backend.Controllers.Admin
 		[HttpPost("Cart"), Authorize]
 		public IActionResult CreateCartItem([FromBody] CreateCartItemRequest request)
         {
+			if (request.Pax <= 0) return BadRequest(Helper.Helper.GenerateError("Pax must be greater than 0"));
+
             // Get user id
             int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
 

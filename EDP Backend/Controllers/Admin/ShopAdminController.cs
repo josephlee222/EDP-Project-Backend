@@ -26,13 +26,13 @@ namespace EDP_Backend.Controllers.Admin
         public IActionResult GetBanners()
         {
             // Get banner 1
-            var banner1 = _context.Banners.Where(b => b.Active).FirstOrDefault(b => b.Slot == 1);
+            var banner1 = _context.Banners.Where(b => b.Active).OrderByDescending(b => b.Id).FirstOrDefault(b => b.Slot == 1);
             // Get banner 2
-            var banner2 = _context.Banners.Where(b => b.Active).FirstOrDefault(b => b.Slot == 2);
+            var banner2 = _context.Banners.Where(b => b.Active).OrderByDescending(b => b.Id).FirstOrDefault(b => b.Slot == 2);
             // Get banner 3
-            var banner3 = _context.Banners.Where(b => b.Active).FirstOrDefault(b => b.Slot == 3);
+            var banner3 = _context.Banners.Where(b => b.Active).OrderByDescending(b => b.Id).FirstOrDefault(b => b.Slot == 3);
             // Get banner 4
-            var banner4 = _context.Banners.Where(b => b.Active).FirstOrDefault(b => b.Slot == 4);
+            var banner4 = _context.Banners.Where(b => b.Active).OrderByDescending(b => b.Id).FirstOrDefault(b => b.Slot == 4);
 
             // Return all banners
             return Ok(new
@@ -54,7 +54,7 @@ namespace EDP_Backend.Controllers.Admin
 				Slot = request.Slot,
 			};
 
-            var existingBanner = _context.Banners.FirstOrDefault(b => b.Slot == request.Slot);
+            var existingBanner = _context.Banners.OrderByDescending(b => b.Id).FirstOrDefault(b => b.Slot == request.Slot);
             if (existingBanner != null)
             {
 				existingBanner.Active = false;
