@@ -308,5 +308,75 @@ namespace EDP_Backend.Controllers.Admin
 
 			return Ok();
         }
+
+		[SwaggerOperation(Summary = "Check whether the gift code is redeemable")]
+		[HttpGet("Redeem/{code}"), Authorize]
+        public IActionResult RedeemGift(string code)
+        {
+			// Get gift
+			var gift = _context.Gifts.Include(g => g.User).FirstOrDefault(g => g.Code == code);
+
+			// Check if gift exists
+			if (gift == null)
+            {
+				return NotFound(Helper.Helper.GenerateError("Gift not found"));
+			}
+
+			// Check if gift has been redeemed
+			if (gift.Claimed)
+            {
+				return BadRequest(Helper.Helper.GenerateError("Gift has already been redeemed"));
+			}
+
+			// Return gift
+			return Ok(gift);
+		}
+
+		[SwaggerOperation(Summary = "Check whether the gift code is redeemable")]
+		[HttpGet("Redeem/{code}/Confirm"), Authorize]
+		public IActionResult RedeemGiftConfirm(string code)
+		{
+			// Get user id
+			int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+
+			// Get user
+			var user = _context.Users.Include(u => u.Notifications).Include(u => u.Cart).FirstOrDefault(u => u.Id == id);
+
+			// Get gift
+			var gift = _context.Gifts.Include(g => g.User).FirstOrDefault(g => g.Code == code);
+
+			// Check if gift exists
+			if (gift == null)
+			{
+				return NotFound(Helper.Helper.GenerateError("Gift not found"));
+			}
+
+			// Check if gift has been redeemed
+			if (gift.Claimed)
+			{
+				return BadRequest(Helper.Helper.GenerateError("Gift has already been redeemed"));
+			}
+
+			// Redeem gift
+			gift.Claimed = true;
+			user.Balance += gift.Amount;
+
+			// Add transaction
+			var transaction = new Models.Transaction
+			{
+				User = user,
+				Amount = gift.Amount,
+				Type = "Gift Redemption",
+				Settled = true,
+			};
+
+			_context.Transactions.Add(transaction);
+			_context.SaveChanges();
+			_hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+			_context.SendNotification(id, "Gift Code Redeemed", "You successfully redeemed a gift code! $" + gift.Amount + " has been added to your balance", "General", "View Wallet", "/profile/wallet");
+
+			// Return updated user
+			return Ok(user);
+		}
 	}
 }

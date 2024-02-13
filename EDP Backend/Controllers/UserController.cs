@@ -738,7 +738,7 @@ namespace EDP_Backend.Controllers
 
         [SwaggerOperation(Summary = "Initialize a top-up with Stripe")]
         [HttpGet("Wallet/Topup"), Authorize]
-        public IActionResult TopupWallet([FromQuery] int amount)
+        public IActionResult TopupWallet([FromQuery] int amount, [FromQuery] string? type="Topup")
         {
             // Get user id from token
             int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
@@ -756,7 +756,8 @@ namespace EDP_Backend.Controllers
                         { "UserId", user.Id.ToString() },
                         { "Email", user.Email },
                         { "Name", user.Name },
-                    },
+						{ "Type", type },
+					},
                 };
 
                 var service = new PaymentIntentService();
@@ -788,33 +789,67 @@ namespace EDP_Backend.Controllers
                     var amount = paymentIntent.Amount;
                     var email = paymentIntent.Metadata["Email"];
                     var name = paymentIntent.Metadata["Name"];
+					var type = paymentIntent.Metadata["Type"];
 
-                    // Update user wallet
-                    User? user = _context.Users.FirstOrDefault(user => user.Id == Convert.ToInt32(userId));
+					
+					User? user = _context.Users.FirstOrDefault(user => user.Id == Convert.ToInt32(userId));
                     if (user != null)
                     {
-                        user.Balance += amount / 100;
-                        _context.SaveChanges();
+						if (type == "Topup")
+						{
+							// Update user wallet
+							user.Balance += amount / 100;
+							_context.SaveChanges();
 
-                        // Add transaction record
-                        Transaction transaction = new()
+							// Add transaction record
+							Transaction transaction = new()
+							{
+								User = user,
+								Amount = amount / 100,
+								Type = "Topup",
+								Settled = true,
+							};
+
+							_context.Transactions.Add(transaction);
+							_context.SaveChanges();
+
+							// Send signalR notification
+							await _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+							_context.SendNotification(user.Id, "Payment Received", "$" + amount / 100 + " has been added to your balance.", "General", "View Wallet", "/profile/wallet");
+
+							// Send email
+							Helper.Helper.SendMail(name, email, "Topup Successful", @$"<h1>Topup Successful</h1><br><p>Amount: ${amount / 100}</p><br><p>Wallet Balance: ${user.Balance}</p>");
+						} else if (type == "Gift")
                         {
-                            User = user,
-                            Amount = amount / 100,
-                            Type = "Topup",
-                            Settled = true,
-                        };
+                            // Add gift record
+                            Gift gift = new()
+                            {
+								User = user,
+								Amount = amount / 100,
+							};
 
-                        _context.Transactions.Add(transaction);
-                        _context.SaveChanges();
+                            _context.Gifts.Add(gift);
 
-                        // Send signalR notification
-                        await _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
-                        _context.SendNotification(user.Id, "Payment Received", "$" + amount / 100 + " has been added to your balance.", "General", "View Wallet", "/profile/wallet");
+							// Add transaction record
+							Transaction transaction = new()
+							{
+								User = user,
+								Amount = amount / 100,
+								Type = "Gift",
+                                Description = "Code: " + gift.Code,
+								Settled = true,
+							};
 
-                        // Send email
-                        Helper.Helper.SendMail(name, email, "Topup Successful", @$"<h1>Topup Successful</h1><br><p>Amount: ${amount / 100}</p><br><p>Wallet Balance: ${user.Balance}</p>");
-                        
+                            _context.Transactions.Add(transaction);
+                            _context.SaveChanges();
+
+                            // Send signalR notification
+                            await _hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+                            _context.SendNotification(user.Id, "Gift Code Purchased", "Your gift code has been made. Code: " + gift.Code, "General", "View Transactions", "/profile/transactions");
+
+							// Send email
+							Helper.Helper.SendMail(name, email, "Gift Code Payment Successful", @$"<h1>Gift Code Payment Successful</h1><br><p>Amount: ${amount / 100}</p><br><p>Gift code: ${gift.Code}</p>");
+						}
                         return Ok();
                     }
                     else
