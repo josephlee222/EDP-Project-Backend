@@ -264,6 +264,11 @@ namespace EDP_Backend.Controllers.Admin
                 }
                 // Apply coupon
 				totalPrice -= (double)coupon.DiscountAmount;
+
+				if (totalPrice < 0)
+				{
+					totalPrice = 0;
+				}
 			}
 
 			// Create a booking for each cart item
