@@ -67,7 +67,33 @@ namespace EDP_Backend.Controllers.Admin
             return Ok(banner);
 		}
 
+		[SwaggerOperation(Summary = "Get sales overview information")]
+		[HttpGet("Sales"), Authorize(Roles = "Admin")]
+		public IActionResult SalesOverview()
+        {
+			var days30 = DateTime.Today.AddDays(-30);
+            var hours24 = DateTime.Now.AddHours(-24);
 
+			// Get transaction money (gifts and topups) in the last 30 days
+			decimal transactionMoney = _context.Transactions.Where(t => t.Type == "Gift" || t.Type == "Topup" && t.CreatedAt >= days30).Sum(t => t.Amount);
+
+			// Get transaction money (gifts and topups) in the last 24 hours
+            decimal transactionMoney24 = _context.Transactions.Where(t => t.Type == "Gift" || t.Type == "Topup" && t.CreatedAt >= hours24).Sum(t => t.Amount);
+
+			// Get transaction money (gifts and topups) lifetime
+            decimal transactionMoneyLifetime = _context.Transactions.Where(t => t.Type == "Gift" || t.Type == "Topup").Sum(t => t.Amount);
+
+            // Get transactions (gifts and topups)
+            var transactions = _context.Transactions.Where(t => t.Type == "Gift" || t.Type == "Topup");
+
+            return Ok(new
+            {
+                transactionMoney,
+                transactionMoney24,
+                transactionMoneyLifetime,
+                transactions
+            });
+		}
 
 
 
