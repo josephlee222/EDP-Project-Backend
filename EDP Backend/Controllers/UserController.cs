@@ -15,6 +15,7 @@ using Fido2NetLib;
 using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Http.Json;
 using Fido2NetLib.Development;
+using NanoidDotNet;
 
 namespace EDP_Backend.Controllers
 {
@@ -30,17 +31,19 @@ namespace EDP_Backend.Controllers
         // import the IHubContext
         private readonly IHubContext<ActionsHub> _hubContext;
 		private readonly IFido2 _fido2;
+		private readonly IWebHostEnvironment _environment;
 		public string from = Environment.GetEnvironmentVariable("NET_MAIL_ADDRESS");
         public string password = Environment.GetEnvironmentVariable("NET_MAIL_PASSWORD");
         public string server = Environment.GetEnvironmentVariable("NET_MAIL_SERVER");
         public int port = Convert.ToInt32(Environment.GetEnvironmentVariable("NET_MAIL_PORT"));
-        public UserController(MyDbContext context, IConfiguration configuration, IHubContext<ActionsHub> hubContext, IFido2 fido2)
+        public UserController(MyDbContext context, IConfiguration configuration, IHubContext<ActionsHub> hubContext, IFido2 fido2, IWebHostEnvironment environment)
         {
             _context = context;
             _configuration = configuration;
             _hubContext = hubContext;
             _fido2 = fido2;
-        }
+			_environment = environment;
+		}
 
         [SwaggerOperation(Summary = "Register with name, email and password")]
         [AllowAnonymous]
@@ -1097,6 +1100,50 @@ namespace EDP_Backend.Controllers
 			}
 
             
+		}
+
+		[SwaggerOperation(Summary = "Upload a profile picture")]
+		[HttpPost("Upload"), Authorize]
+		public IActionResult UploadProfile(IFormFile file)
+		{
+			if (file.Length > 1024 * 1024 * 10)
+			{
+				var message = "Maximum file size is 10MB";
+				return BadRequest(new { message });
+			}
+
+			var id = Nanoid.Generate(size: 15);
+			var filename = id + Path.GetExtension(file.FileName);
+			var imagePath = Path.Combine(_environment.ContentRootPath, @"wwwroot/uploads", filename);
+			// create folder in wwwroot
+			if (!Directory.Exists(Path.GetDirectoryName(imagePath)))
+			{
+				Directory.CreateDirectory(Path.GetDirectoryName(imagePath));
+			}
+			using var fileStream = new FileStream(imagePath, FileMode.Create);
+			file.CopyTo(fileStream);
+
+			// Get user from database
+			int userId = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+            var user = _context.Users.FirstOrDefault(user => user.Id == userId);
+
+            // Delete old profile picture
+            if (user.ProfilePicture != null)
+            {
+                var oldImagePath = Path.Combine(_environment.ContentRootPath, @"wwwroot/uploads", user.ProfilePicture);
+				if (System.IO.File.Exists(oldImagePath))
+                {
+					System.IO.File.Delete(oldImagePath);
+				}
+            }
+
+            // Update user profile picture
+            user.ProfilePicture = filename;
+            user.ProfilePictureType = "local";
+            _context.SaveChanges();
+
+			_hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
+			return Ok(user);
 		}
 
 		private string CreateToken(User user)
