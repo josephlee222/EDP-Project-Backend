@@ -1041,6 +1041,47 @@ namespace EDP_Backend.Controllers
 			return Ok(new { request.AttestationResponse, options });
 		}
 
+		[SwaggerOperation(Summary = "Get a list of registered passkey devices of logged-in user")]
+		[HttpGet("Passkey/Devices"), Authorize]
+        public async Task<IActionResult> GetPasskeyDevices()
+        {
+            
+			int id = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+			var credentials = await _context.Credentials.Where(credential => credential.UserId == id).ToListAsync();
+			var devices = new List<Device>();
+
+			foreach (var credential in credentials)
+            {
+				var device = new Device
+                {
+					Id = credential.Id,
+					DeviceName = credential.DeviceName,
+				};
+				devices.Add(device);
+			}
+
+			return Ok(devices);
+		}
+
+		[SwaggerOperation(Summary = "Delete a passkey from logged-in user")]
+		[HttpDelete("Passkey/Devices/{id}"), Authorize]
+        public async Task<IActionResult> DeletePasskeyDevice(int id)
+        {
+			int userId = Convert.ToInt32(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+			var credential = await _context.Credentials.FirstOrDefaultAsync(credential => credential.Id == id && credential.UserId == userId);
+
+			if (credential != null)
+            {
+				_context.Credentials.Remove(credential);
+				_context.SaveChanges();
+				return Ok();
+			}
+			else
+            {
+				return BadRequest(Helper.Helper.GenerateError("Device does not exist"));
+			}
+		}
+
 		[SwaggerOperation(Summary = "Get options for login with passwordless authentication")]
 		[HttpGet("Login/Passkey")]
         public IActionResult GetPasskeyLoginOptions()
@@ -1144,6 +1185,12 @@ namespace EDP_Backend.Controllers
 
 			_hubContext.Clients.Groups(user.Id.ToString()).SendAsync("refresh");
 			return Ok(user);
+		}
+
+        public class Device
+        {
+			public int Id { get; set; }
+			public string DeviceName { get; set; }
 		}
 
 		private string CreateToken(User user)
