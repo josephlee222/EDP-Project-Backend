@@ -27,6 +27,10 @@ More than just a booking platform, UPlay aspires to connect people from all walk
 - **Front-end** - ReactJS, Material UI, SignalR Client, Stripe Payment & Elements, Google & Facebook OAuth
 - **Back-end** - ASP.NET Core API, SignalR Server, fido2-net-lib, Microsoft SQL & Entity Framework
 
+### Hosting
+- **Front-end** - Powered by Vercel
+- **Back-end** - Powered by Azure App Service with SQL Server by Azure
+
 ## Back-End Usage
 
 1. Clone Repo & open project
